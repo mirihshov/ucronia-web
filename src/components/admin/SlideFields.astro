@@ -1,0 +1,32 @@
+---
+// Campos de un titular de la portada (titular + foto). Los nombres se repiten: el servidor los lee en el orden del formulario.
+const { slide, n = 1 } = Astro.props as { slide?: { kicker: string; title: string; deck: string; image: string; imageAlt: string; caption: string; customImage: boolean; key: string | null }; n?: number };
+const s = slide ?? { kicker: '', title: '', deck: '', image: '', imageAlt: '', caption: '', customImage: false, key: null };
+---
+<fieldset class="slide-card" data-slide-card>
+  <div class="slide-head">
+    <p class="slide-num"><span data-n>{n}</span><b data-t>{s.title || 'Nuevo titular'}</b></p>
+    <div class="acts">
+      <button type="button" class="ico" data-up aria-label="Subir">↑</button>
+      <button type="button" class="ico" data-down aria-label="Bajar">↓</button>
+      <button type="button" class="ico danger" data-remove aria-label="Quitar este titular">✕</button>
+    </div>
+  </div>
+  <label>Antetítulo<input name="kicker" maxlength="80" value={s.kicker} /></label>
+  <label>Titular<input name="title" maxlength="120" value={s.title} data-title required /></label>
+  <label>Bajada<textarea name="deck" rows="3" maxlength="400">{s.deck}</textarea></label>
+  <div class="slide-photo">
+    {s.image ? <img class="thumb photo" src={s.image} alt="Foto actual" data-preview /> : <img class="thumb photo" alt="" data-preview hidden />}
+    <div class="slide-photo-f">
+      <input type="hidden" name="image_key" value={s.key ?? ''} />
+      <label>Foto (JPG, PNG o WebP, máx. 3 MB; mejor 1200 px de ancho o más)
+        <input type="file" name="image" accept="image/jpeg,image/png,image/webp" data-file />
+      </label>
+      {s.customImage
+        ? <label>Foto actual<select name="image_mode"><option value="keep">Mantener esta foto</option><option value="remove">Volver a la foto original</option></select></label>
+        : <><input type="hidden" name="image_mode" value="keep" /><p class="note">{s.image ? 'Usa la foto original del diseño. Sube otra para cambiarla.' : 'Sin foto: se usará la original del diseño.'}</p></>}
+      <label>Descripción de la foto (accesibilidad)<input name="imageAlt" maxlength="160" value={s.imageAlt} /></label>
+      <label>Pie de foto (vacío = sin pie)<input name="caption" maxlength="140" value={s.caption} /></label>
+    </div>
+  </div>
+</fieldset>

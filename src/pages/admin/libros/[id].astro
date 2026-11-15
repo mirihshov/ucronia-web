@@ -1,0 +1,78 @@
+---
+import Admin from '../../../layouts/Admin.astro';
+import { coverUrl, formatSize } from '../../../lib/catalog';
+const db = Astro.locals.admin!.client;
+const id = Astro.params.id!;
+const isNew = id === 'nuevo';
+let book: any = { language: 'es', tags: [] };
+if (!isNew) {
+  const { data } = await db.from('books').select('*').eq('id', id).maybeSingle();
+  if (!data) return Astro.redirect('/admin?msg=' + encodeURIComponent('Libro no encontrado.'));
+  book = data;
+}
+const { data: cats } = await db.from('categories').select('id,name').order('position');
+---
+<Admin title={isNew ? 'Nuevo libro' : 'Editar libro'}>
+  <div class="adm-title"><div><p class="kicker"><a href="/admin">← Libros</a></p><h1>{isNew ? 'Nuevo libro' : 'Editar ficha'}</h1></div></div>
+  <form method="post" action="/api/admin/books" class="stack" enctype="multipart/form-data">
+    <input type="hidden" name="intent" value="save" />
+    {!isNew && <input type="hidden" name="id" value={book.id} />}
+    <fieldset>
+      <legend>Ficha</legend>
+      <label>Título<input name="title" required maxlength="300" value={book.title ?? ''} /></label>
+      <label>Autor<input name="author" required maxlength="200" value={book.author ?? ''} /></label>
+      <label>Descripción<textarea name="description" rows="6" maxlength="5000">{book.description ?? ''}</textarea></label>
+      <div class="row2">
+        <label>Editorial<input name="publisher" maxlength="200" value={book.publisher ?? ''} /></label>
+        <label>Año de publicación<input name="year" inputmode="numeric" maxlength="4" value={book.year ?? ''} /></label>
+      </div>
+      <div class="row2">
+        <label>Idioma (código)<input name="language" maxlength="10" value={book.language} /></label>
+        <label>Categoría
+          <select name="category_id">
+            <option value="">— Sin categoría —</option>
+            {(cats ?? []).map((c) => <option value={c.id} selected={c.id === book.category_id}>{c.name}</option>)}
+          </select>
+        </label>
+      </div>
+      <label>Etiquetas (separadas por coma)<input name="tags" value={book.tags.join(', ')} /></label>
+    </fieldset>
+    <fieldset>
+      <legend>Archivos</legend>
+      <label>Archivo EPUB {isNew ? '(obligatorio)' : '(opcional: reemplaza el actual)'}
+        <input type="file" name="epub" accept=".epub,application/epub+zip" required={isNew} />
+        <input type="hidden" name="epub_sha256" value="" />
+      </label>
+      {!isNew && <p class="note" style="margin:0">{book.epub_key ? `EPUB actual: ${formatSize(book.epub_size)}` : 'Sin EPUB: no se puede publicar.'}</p>}
+      <label>Portada (JPG, PNG o WebP, máx. 2 MB)
+        <input type="file" name="cover" accept="image/jpeg,image/png,image/webp" />
+      </label>
+      {book.cover_key && <img class="thumb" src={coverUrl(book.cover_key)!} alt="Portada actual" width="140" />}
+    </fieldset>
+    <div class="form-actions"><button class="primary">Guardar</button><a class="btn-s" href="/admin">Cancelar</a></div>
+  </form>
+  <script is:inline>
+    // Calcula la huella SHA-256 del EPUB en el navegador (rápido) para no gastar CPU del servidor.
+    (() => {
+      const form = document.querySelector('form[enctype="multipart/form-data"]');
+      const file = form?.querySelector('input[name=epub]');
+      const hash = form?.querySelector('input[name=epub_sha256]');
+      if (!form || !file || !hash || !window.crypto?.subtle) return;
+      let busy = false;
+      form.addEventListener('submit', async (e) => {
+        const f = file.files && file.files[0];
+        if (busy || !f || f.size <= 3 * 1048576) return;
+        e.preventDefault(); busy = true;
+        const btn = e.submitter || form.querySelector('button.primary');
+        const label = btn ? btn.textContent : '';
+        if (btn) { btn.disabled = true; btn.textContent = 'Preparando archivo…'; }
+        try {
+          const d = new Uint8Array(await crypto.subtle.digest('SHA-256', await f.arrayBuffer()));
+          hash.value = [...d].map((b) => b.toString(16).padStart(2, '0')).join('');
+        } catch { hash.value = ''; }
+        if (btn) { btn.disabled = false; btn.textContent = label; }
+        form.submit();
+      });
+    })();
+  </script>
+</Admin>

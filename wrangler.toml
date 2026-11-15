@@ -1,0 +1,16 @@
+# Cloudflare Pages. El nombre debe coincidir con el proyecto de Pages.
+name = "biblioteca-ucronia"
+pages_build_output_dir = "./dist"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# EPUB, portadas y fotos de la portada (bucket PRIVADO). Cambia bucket_name por el real.
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "ucronia-libros"
+
+[vars]
+# Plan gratuito: 10 ms de CPU por petición. Límite de EPUB seguro; súbelo solo con Workers de pago.
+MAX_EPUB_MB = "15"
+# Respaldo en GitHub: "usuario/repositorio". El token va como secreto GITHUB_DISPATCH_TOKEN.
+GITHUB_BACKUP_REPO = ""

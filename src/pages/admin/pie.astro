@@ -1,0 +1,56 @@
+---
+import Admin from '../../layouts/Admin.astro';
+import { getFooter, MAX_COLS, MAX_COL_LINKS, MAX_SOCIAL, NETWORKS } from '../../lib/footer';
+const f = await getFooter(Astro.locals.admin!.client);
+const cols = Array.from({ length: MAX_COLS }, (_, i) => f.columns[i] ?? { title: '', text: '', links: [] });
+const social = Array.from({ length: MAX_SOCIAL }, (_, i) => f.social[i] ?? { network: 'instagram', url: '' });
+---
+<Admin title="Pie de página">
+  <div class="adm-title"><div><p class="kicker">Sitio</p><h1>Pie de página</h1><p class="adm-lead">Fondo negro con el logo, hasta {MAX_COLS} columnas de información (texto y enlaces) y redes sociales. Lo que dejes en blanco no se muestra. Los cambios se ven en la web en menos de un minuto.</p></div></div>
+  <form method="post" action="/api/admin/footer" class="stack wide">
+    <input type="hidden" name="intent" value="save" />
+
+    <label>Frase junto al logo (vacío = ninguna)<input name="tagline" maxlength="140" value={f.tagline} /></label>
+    <label>Línea inferior (el año se añade solo)<input name="note" maxlength="200" value={f.note} /></label>
+
+    <h2 class="section" style="margin-top:14px">Columnas</h2>
+    <p class="note">Cada columna tiene un título, un texto libre (direcciones, horarios, correos: los correos se enlazan solos; una línea por renglón) y hasta {MAX_COL_LINKS} enlaces. Se aceptan rutas del sitio (/acerca#legal), https://… y mailto:….</p>
+    {cols.map((c, i) => (
+      <fieldset class="slide-card">
+        <div class="slide-head"><p class="slide-num"><span>{i + 1}</span><b>{c.title || `Columna ${i + 1}`}</b></p></div>
+        <label>Título<input name="col_title" maxlength="40" value={c.title} /></label>
+        <label>Texto<textarea name="col_text" rows="4" maxlength="300">{c.text}</textarea></label>
+        <div class="link-rows">
+          {Array.from({ length: MAX_COL_LINKS }, (_, k) => c.links[k] ?? { label: '', url: '' }).map((l, k) => (
+            <div class="link-row">
+              <input name="col_link_label" maxlength="40" value={l.label} placeholder="Texto del enlace" aria-label={`Columna ${i + 1}, texto del enlace ${k + 1}`} />
+              <input name="col_link_url" maxlength="200" value={l.url} placeholder="/ruta · https://… · mailto:…" aria-label={`Columna ${i + 1}, dirección del enlace ${k + 1}`} />
+            </div>
+          ))}
+        </div>
+      </fieldset>
+    ))}
+
+    <h2 class="section" style="margin-top:14px">Redes sociales</h2>
+    <p class="note">Iconos junto al logo. Las direcciones deben empezar por https:// (en «Correo» basta con escribir el correo). Las filas sin dirección no se muestran.</p>
+    <div class="link-rows">
+      {social.map((s, i) => (
+        <div class="link-row soc-row">
+          <select name="soc_network" aria-label={`Red ${i + 1}`}>
+            {Object.entries(NETWORKS).map(([k, label]) => <option value={k} selected={k === s.network}>{label}</option>)}
+          </select>
+          <input name="soc_url" maxlength="200" value={s.url} placeholder="https://instagram.com/tu-cuenta" aria-label={`Dirección de la red ${i + 1}`} />
+        </div>
+      ))}
+    </div>
+
+    <div class="form-actions">
+      <button class="primary">Guardar</button>
+      <a class="btn-s" href="/" target="_blank" rel="noopener">Ver sitio</a>
+    </div>
+  </form>
+  <form method="post" action="/api/admin/footer" onsubmit="return confirm('¿Volver al pie de página original?')" class="section">
+    <input type="hidden" name="intent" value="reset" />
+    <button class="danger">Restablecer pie original</button>
+  </form>
+</Admin>

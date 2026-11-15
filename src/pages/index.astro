@@ -1,0 +1,92 @@
+---
+import Base from '../layouts/Base.astro';
+import BookCard from '../components/BookCard.astro';
+import { listBooks, getCategories } from '../lib/catalog';
+import { getSlides } from '../lib/settings';
+import { site } from '../lib/site';
+const [{ books: featured }, { books: latest, total }, slides, categories] = await Promise.all([
+  listBooks({ featured: true, limit: 6 }), listBooks({ limit: 6 }), getSlides(), getCategories(),
+]);
+const words = (t: string) => t.split(' ');
+const many = slides.length > 1;
+const pad = (n: number) => String(n).padStart(2, '0');
+const indexLabel = (i: number) => site.heroIndex.replace(/\d+$/, String(i + 1).padStart(3, '0'));
+const INTERVAL = 7000; // ms que dura cada titular
+---
+<Base active="inicio">
+  <section class="hero" data-hero data-interval={INTERVAL} role="region" aria-roledescription="carrusel" aria-label="Titulares de la biblioteca">
+    <figure class="hero-image">
+      {slides.map((s, i) => (
+        <div class={`hero-img${i === 0 ? ' on' : ''}`} data-slide={i} aria-hidden={i === 0 ? undefined : 'true'}>
+          <div class="kb"><img src={s.image} alt={s.imageAlt} style={`object-position:${s.focus}`} fetchpriority={i === 0 ? 'high' : undefined} loading={i === 0 ? undefined : 'lazy'} decoding={i === 0 ? undefined : 'async'} /></div>
+          <span class="image-index">{indexLabel(i)}</span>
+          {s.caption && <figcaption>{s.caption}</figcaption>}
+        </div>
+      ))}
+    </figure>
+    <div class="hero-copy">
+      <div class="hero-slides">
+        {slides.map((s, i) => (
+          <div class={`hero-slide${i === 0 ? ' on' : ''}`} data-slide={i} role="group" aria-roledescription="diapositiva" aria-label={`${i + 1} de ${slides.length}`}>
+            {s.kicker && <p class="kicker">{s.kicker}</p>}
+            <h1 aria-label={s.title}>{words(s.title).map((w, j) => <><span class="w" aria-hidden="true"><span style={`--i:${j}`}>{w}</span></span>{' '}</>)}</h1>
+            {s.deck && <p class="hero-deck">{s.deck}</p>}
+          </div>
+        ))}
+      </div>
+      <form class="search-box" action="/catalogo" method="get" role="search" data-suggest>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m15.5 15.5 5 5" /></svg>
+        <input name="q" placeholder="Título, autor, género o etiqueta…" aria-label="Buscar en la biblioteca" />
+        <button>Buscar</button>
+      </form>
+      {categories.length > 0 && (
+        <nav class="chips" aria-label="Explorar por categoría"><span>Explorar</span>{categories.slice(0, 6).map((c) => <a href={`/catalogo?categoria=${c.slug}`}>{c.name}</a>)}</nav>
+      )}
+      <p class="index-note"><span data-count={total}>{total}</span> {total === 1 ? 'título publicado' : 'títulos publicados'} · Descarga gratuita en EPUB</p>
+    </div>
+    {many && (
+      <>
+        <button type="button" class="hero-arrow prev" data-hero-prev aria-label="Titular anterior"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg></button>
+        <button type="button" class="hero-arrow next" data-hero-next aria-label="Titular siguiente"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" /></svg></button>
+      </>
+    )}
+  </section>
+
+  {featured.length > 0 && (
+    <section class="catalog" id="destacados">
+      <div class="catalog-head" data-reveal>
+        <div><p class="kicker">Elegidos por los editores</p><h2>Selección destacada</h2></div>
+      </div>
+      <div class="books-grid">{featured.map((b, i) => <BookCard book={b} i={i} />)}</div>
+    </section>
+  )}
+
+  <section class="catalog" id="recientes">
+    <div class="catalog-head" data-reveal>
+      <div><p class="kicker">Recién llegados</p><h2>Últimas incorporaciones</h2></div>
+      <p>Los títulos más recientes de la colección abierta.</p>
+    </div>
+    {latest.length
+      ? <div class="books-grid">{latest.map((b, i) => <BookCard book={b} i={i} />)}</div>
+      : <div class="empty-state"><p>Aún no hay libros</p><h3>La colección se está preparando.</h3></div>}
+    {latest.length > 0 && <a class="more-button" href="/catalogo">Ver todo el catálogo <span>→</span></a>}
+  </section>
+
+  <section class="manifesto" id="manifiesto">
+    <div class="manifesto-head">
+      <p class="kicker" data-reveal>Manifiesto</p>
+      <blockquote data-scrub aria-label={site.quote}>{words(site.quote).map((w) => <><span class="sw" aria-hidden="true">{w}</span>{' '}</>)}</blockquote>
+      <p class="attribution" data-reveal>{site.quoteBy}</p>
+      <p class="m-count" aria-hidden="true"><span>Principio</span> <b data-m-cur>01</b> <i></i> {pad(site.principles.length)}</p>
+    </div>
+    <div class="manifesto-body">
+      <p class="lead" data-reveal>{site.manifestoLead}</p>
+      <ol class="principles">
+        {site.principles.map((p, i) => (
+          <li data-reveal style={`--i:${i}`}><span class="num">{pad(i + 1)}</span><h3>{p.title}</h3><p>{p.text}</p></li>
+        ))}
+      </ol>
+      <a class="manifesto-link" href="/acerca#criterios" data-reveal>Criterios de publicación <span>↗</span></a>
+    </div>
+  </section>
+</Base>

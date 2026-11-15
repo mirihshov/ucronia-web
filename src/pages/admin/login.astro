@@ -1,0 +1,27 @@
+---
+import Admin from '../../layouts/Admin.astro';
+import { site } from '../../lib/site';
+import { anon, asUser, setSession } from '../../lib/auth';
+let error = '';
+if (Astro.request.method === 'POST') {
+  const f = await Astro.request.formData();
+  const { data, error: e } = await anon().auth.signInWithPassword({
+    email: String(f.get('email') ?? '').trim(), password: String(f.get('password') ?? ''),
+  });
+  if (!e && data.session) {
+    const { data: ok } = await asUser(data.session.access_token).rpc('is_admin');
+    if (ok === true) { setSession(Astro.cookies, data.session); return Astro.redirect('/admin'); }
+  }
+  error = 'Credenciales incorrectas.'; // mismo mensaje para no revelar si el usuario existe o es admin
+}
+---
+<Admin title="Acceso" bare>
+  <form method="post" class="login stack">
+    {site.logo && <img class="login-logo" src={site.logo} alt={site.name} width="182" height="44" />}
+    <div><p class="kicker">Administración</p><h1>Acceso</h1></div>
+    {error && <p class="msg" role="alert">{error}</p>}
+    <label>Correo<input type="email" name="email" required autocomplete="username" inputmode="email" autocapitalize="none" /></label>
+    <label>Contraseña<input type="password" name="password" required autocomplete="current-password" /></label>
+    <button class="primary">Entrar</button>
+  </form>
+</Admin>

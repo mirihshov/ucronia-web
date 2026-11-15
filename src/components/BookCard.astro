@@ -1,0 +1,19 @@
+---
+import { coverUrl, coverVariant, markOf, type Book } from '../lib/catalog';
+const { book, i = 0 } = Astro.props as { book: Book; i?: number };
+const src = coverUrl(book.cover_key);
+const href = `/libro/${book.slug}`;
+---
+<article class="book-card" data-reveal style={`--i:${i % 3}`}>
+  <a class={`book-cover cover-${coverVariant(book.id)}${src ? ' has-img' : ''}`} href={href} tabindex="-1" aria-hidden="true">
+    {src
+      ? <img src={src} alt="" loading="lazy" width="125" height="184" />
+      : <><span>{book.language.toUpperCase()}</span><strong>{markOf(book.title)}</strong><i>{book.year ?? ''}</i></>}
+  </a>
+  <div class="book-info">
+    <p>{[book.category?.name, book.year].filter(Boolean).join(' · ') || 'Sin categoría'}</p>
+    <h3><a href={href}>{book.title}</a></h3>
+    <b>{book.author}</b>
+    <span class="more">Ver ficha <i>→</i></span>
+  </div>
+</article>

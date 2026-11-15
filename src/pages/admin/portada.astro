@@ -1,0 +1,69 @@
+---
+import Admin from '../../layouts/Admin.astro';
+import SlideFields from '../../components/admin/SlideFields.astro';
+import { getSlides, MAX_SLIDES } from '../../lib/settings';
+const slides = await getSlides(Astro.locals.admin!.client);
+---
+<Admin title="Portada">
+  <div class="adm-title"><div><p class="kicker">Sitio</p><h1>Portada</h1><p class="adm-lead">Titulares de la página de inicio. Con dos o más, rotan solos junto a su foto cada pocos segundos. Los cambios se ven en la web en menos de un minuto.</p></div></div>
+  <form method="post" action="/api/admin/settings" enctype="multipart/form-data" class="stack wide" id="slides-form">
+    <input type="hidden" name="intent" value="save" />
+    <div class="slides" data-slides data-max={MAX_SLIDES}>
+      {slides.map((s, i) => <SlideFields slide={s} n={i + 1} />)}
+    </div>
+    <template id="slide-tpl"><SlideFields n={0} /></template>
+    <div class="add-row">
+      <button type="button" class="btn-add" data-add>+ Añadir titular</button>
+      <p class="note" data-limit hidden>Máximo {MAX_SLIDES} titulares.</p>
+    </div>
+    <div class="form-actions">
+      <button class="primary">Guardar</button>
+      <a class="btn-s" href="/" target="_blank" rel="noopener">Ver portada</a>
+    </div>
+  </form>
+  <form method="post" action="/api/admin/settings" enctype="multipart/form-data" onsubmit="return confirm('¿Volver a los titulares y fotos originales?')" class="section">
+    <input type="hidden" name="intent" value="reset" />
+    <button class="danger">Restablecer todo a lo original</button>
+  </form>
+  <script is:inline>
+    (() => {
+      const box = document.querySelector('[data-slides]');
+      const max = Number(box.dataset.max);
+      const form = document.getElementById('slides-form');
+      const cards = () => [...box.querySelectorAll('[data-slide-card]')];
+      const refresh = () => {
+        const cs = cards();
+        cs.forEach((c, i) => {
+          c.querySelector('[data-n]').textContent = i + 1;
+          c.querySelector('[data-up]').disabled = i === 0;
+          c.querySelector('[data-down]').disabled = i === cs.length - 1;
+          c.querySelector('[data-remove]').disabled = cs.length === 1;
+        });
+        form.querySelector('[data-add]').disabled = cs.length >= max;
+        form.querySelector('[data-limit]').hidden = cs.length < max;
+      };
+      form.addEventListener('click', (e) => {
+        const c = e.target.closest('[data-slide-card]');
+        if (e.target.closest('[data-add]')) {
+          if (cards().length >= max) return;
+          const node = document.getElementById('slide-tpl').content.firstElementChild.cloneNode(true);
+          box.appendChild(node); refresh(); node.querySelector('[data-title]').focus();
+        } else if (c && e.target.closest('[data-up]') && c.previousElementSibling) { box.insertBefore(c, c.previousElementSibling); refresh(); }
+        else if (c && e.target.closest('[data-down]') && c.nextElementSibling) { box.insertBefore(c.nextElementSibling, c); refresh(); }
+        else if (c && e.target.closest('[data-remove]') && cards().length > 1) {
+          if (confirm('¿Quitar este titular? Se aplica al guardar.')) { c.remove(); refresh(); }
+        }
+      });
+      form.addEventListener('input', (e) => {
+        const c = e.target.closest('[data-slide-card]');
+        if (c && e.target.matches('[data-title]')) c.querySelector('[data-t]').textContent = e.target.value || 'Nuevo titular';
+      });
+      form.addEventListener('change', (e) => {
+        if (!e.target.matches('[data-file]')) return;
+        const c = e.target.closest('[data-slide-card]'), img = c.querySelector('[data-preview]'), f = e.target.files[0];
+        if (f) { img.src = URL.createObjectURL(f); img.hidden = false; }
+      });
+      refresh();
+    })();
+  </script>
+</Admin>

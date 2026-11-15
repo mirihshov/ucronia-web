@@ -1,0 +1,59 @@
+---
+import Admin from '../../layouts/Admin.astro';
+const db = Astro.locals.admin!.client;
+const { data } = await db.from('books')
+  .select('id,title,author,published,featured,epub_key,category:categories(name)')
+  .order('created_at', { ascending: false });
+const books = (data ?? []) as any[];
+const { data: sync } = await db.from('sync_log').select('*').eq('id', 1).maybeSingle();
+const pub = books.filter((b) => b.published).length;
+const feat = books.filter((b) => b.featured).length;
+const noEpub = books.filter((b) => !b.epub_key).length;
+const fmt = (d: string) => new Intl.DateTimeFormat('es', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(d));
+---
+<Admin title="Libros">
+  <div class="adm-title">
+    <div>
+      <p class="kicker">Catálogo</p>
+      <h1>Libros</h1>
+    </div>
+    <a class="btn-s primary" href="/admin/libros/nuevo">+ Nuevo libro</a>
+  </div>
+  <div class="stats" role="group" aria-label="Resumen del catálogo">
+    <div><b>{books.length}</b><span>Total</span></div>
+    <div><b>{pub}</b><span>Publicados</span></div>
+    <div><b>{books.length - pub}</b><span>Borradores</span></div>
+    <div><b>{feat}</b><span>Destacados</span></div>
+  </div>
+  {noEpub > 0 && <p class="msg">{noEpub} {noEpub === 1 ? 'libro no tiene' : 'libros no tienen'} EPUB y no se {noEpub === 1 ? 'puede' : 'pueden'} publicar.</p>}
+  <div class="panel">
+    <span><b>Respaldo en GitHub</b> · {sync ? <>{sync.status === 'ok' ? 'correcto' : <b>ERROR</b>} · {fmt(sync.synced_at)} · {sync.detail}</> : 'sin registros todavía'}</span>
+    <form method="post" action="/api/admin/backup"><button>Respaldar ahora</button></form>
+  </div>
+  {books.length === 0 ? <p class="empty">Aún no hay libros. Crea el primero.</p> : (
+    <table>
+      <thead><tr><th>Libro</th><th>Categoría</th><th>Estado</th><th>EPUB</th><th><span class="sr-only">Acciones</span></th></tr></thead>
+      <tbody>{books.map((b) => (
+        <tr>
+          <td class="main"><a href={`/admin/libros/${b.id}`}><strong>{b.title}</strong></a><small>{b.author}</small></td>
+          <td data-label="Categoría">{b.category?.name ?? '—'}</td>
+          <td data-label="Estado"><span class="tags"><span class={`tag ${b.published ? 'on' : ''}`}>{b.published ? 'Publicado' : 'Borrador'}</span>{b.featured && <span class="tag">Destacado</span>}</span></td>
+          <td data-label="EPUB"><span class={`tag ${b.epub_key ? '' : 'warn'}`}>{b.epub_key ? 'Sí' : 'No'}</span></td>
+          <td class="act">
+            <div class="acts">
+              <form method="post" action="/api/admin/books">
+                <input type="hidden" name="id" value={b.id} />
+                <button name="intent" value={b.published ? 'unpublish' : 'publish'}>{b.published ? 'Despublicar' : 'Publicar'}</button>
+                <button name="intent" value={b.featured ? 'unfeature' : 'feature'}>{b.featured ? 'Quitar destacado' : 'Destacar'}</button>
+              </form>
+              <form method="post" action="/api/admin/books" onsubmit="return confirm('¿Eliminar definitivamente este libro?')">
+                <input type="hidden" name="id" value={b.id} />
+                <button class="danger" name="intent" value="delete">Eliminar</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+      ))}</tbody>
+    </table>
+  )}
+</Admin>

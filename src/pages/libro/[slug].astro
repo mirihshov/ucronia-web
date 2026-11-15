@@ -1,0 +1,43 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getBook, coverUrl, coverVariant, markOf, formatSize } from '../../lib/catalog';
+import { site } from '../../lib/site';
+const book = await getBook(Astro.params.slug!);
+if (!book) return new Response('Libro no encontrado', { status: 404 });
+const src = coverUrl(book.cover_key);
+const ld = {
+  '@context': 'https://schema.org', '@type': 'Book', name: book.title, author: { '@type': 'Person', name: book.author },
+  inLanguage: book.language, ...(book.year ? { datePublished: String(book.year) } : {}),
+  ...(book.publisher ? { publisher: book.publisher } : {}), ...(book.description ? { description: book.description } : {}),
+  ...(src ? { image: new URL(src, Astro.url.origin).href } : {}), ...(book.category ? { genre: book.category.name } : {}),
+  url: Astro.url.href,
+};
+const jsonLd = JSON.stringify(ld).replace(/</g, '\\u003c');
+---
+<Base title={`${book.title} — ${book.author}`} description={(book.description ?? `${book.title}, de ${book.author}. Descarga gratuita en EPUB.`).slice(0, 160)} image={src ?? undefined} type="book" active="biblioteca">
+  <script type="application/ld+json" slot="head" set:html={jsonLd} />
+  <article class="detail">
+    <div>
+      <div class={`book-cover cover-${coverVariant(book.id)}${src ? ' has-img' : ''}`}>
+        {src ? <img src={src} alt={`Portada de ${book.title}`} />
+             : <><span>{book.language.toUpperCase()}</span><strong>{markOf(book.title)}</strong><i>{book.year ?? ''}</i></>}
+      </div>
+    </div>
+    <div>
+      <a class="back" href="/catalogo">← Biblioteca</a>
+      <p class="kicker">{book.category ? <a href={`/catalogo?categoria=${book.category.slug}`}>{book.category.name}</a> : 'Sin categoría'}</p>
+      <h1>{book.title}</h1>
+      <p class="detail-author">{book.author}</p>
+      {book.description && <p class="detail-desc">{book.description}</p>}
+      <dl class="meta">
+        {book.publisher && <><dt>Editorial</dt><dd>{book.publisher}</dd></>}
+        {book.year && <><dt>Año</dt><dd>{book.year}</dd></>}
+        {book.category && <><dt>Género</dt><dd>{book.category.name}</dd></>}
+        <dt>Idioma</dt><dd>{book.language}</dd>
+        {book.epub_key && <><dt>Formato</dt><dd>EPUB · {formatSize(book.epub_size)}</dd></>}
+        {book.tags.length > 0 && <><dt>Etiquetas</dt><dd>{book.tags.join(', ')}</dd></>}
+      </dl>
+      {book.epub_key && <a class="more-button" href={`/descargar/${book.slug}`} rel="nofollow">Descargar EPUB <span>↓</span></a>}
+    </div>
+  </article>
+</Base>

@@ -1,0 +1,44 @@
+---
+import Base from '../layouts/Base.astro';
+import BookCard from '../components/BookCard.astro';
+import { listBooks, getCategories, PAGE_SIZE } from '../lib/catalog';
+const sp = Astro.url.searchParams;
+const q = sp.get('q') ?? '';
+const categoria = sp.get('categoria') ?? '';
+const page = Math.max(1, Number(sp.get('p')) || 1);
+const [{ books, total }, categories] = await Promise.all([listBooks({ q, category: categoria, page }), getCategories()]);
+const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+const href = (p: number) => { const u = new URL(Astro.url); u.searchParams.set('p', String(p)); return u.pathname + u.search; };
+const catName = categories.find((c) => c.slug === categoria)?.name;
+const heading = q ? `Resultados para «${q}»` : catName ?? 'Biblioteca';
+---
+<Base title={heading} active="biblioteca" description={`Explora el catálogo: ${total} libros en EPUB.`}>
+  {(q || page > 1) && <meta slot="head" name="robots" content="noindex, follow" />}
+  <section class="catalog" id="biblioteca">
+    <div class="catalog-head">
+      <div><p class="kicker">Colección abierta</p><h2>{heading}</h2></div>
+      <p>{total} {total === 1 ? 'libro encontrado' : 'libros encontrados'}. Descarga gratuita en formato EPUB.</p>
+    </div>
+    <div class="filters" id="buscar">
+      <form class="catalog-search" action="/catalogo" method="get" role="search" data-suggest>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m15.5 15.5 5 5" /></svg>
+        {categoria && <input type="hidden" name="categoria" value={categoria} />}
+        <input name="q" value={q} placeholder="Título, autor, género o etiqueta" aria-label="Buscar" />
+      </form>
+      <div class="category-row">
+        <a href="/catalogo" class={!categoria ? 'selected' : ''}>Todos</a>
+        {categories.map((c) => <a href={`/catalogo?categoria=${c.slug}`} class={categoria === c.slug ? 'selected' : ''}>{c.name}</a>)}
+      </div>
+    </div>
+    {books.length
+      ? <div class="books-grid">{books.map((b, i) => <BookCard book={b} i={i} />)}</div>
+      : <div class="empty-state"><p>Sin resultados</p><h3>Prueba con otro autor, título o categoría.</h3><a href="/catalogo">Restablecer búsqueda</a></div>}
+    {pages > 1 && (
+      <div class="pager">
+        {page > 1 ? <a href={href(page - 1)}>← Anterior</a> : <span />}
+        <span>Página {page} de {pages}</span>
+        {page < pages ? <a href={href(page + 1)}>Siguiente →</a> : <span />}
+      </div>
+    )}
+  </section>
+</Base>

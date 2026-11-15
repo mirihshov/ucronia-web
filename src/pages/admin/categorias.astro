@@ -1,0 +1,39 @@
+---
+import Admin from '../../layouts/Admin.astro';
+const db = Astro.locals.admin!.client;
+const { data } = await db.from('categories').select('id,name,slug').order('position');
+const cats = data ?? [];
+---
+<Admin title="Categorías">
+  <div class="adm-title"><div><p class="kicker">Catálogo</p><h1>Categorías</h1></div></div>
+  {cats.length === 0 ? <p class="empty">Aún no hay categorías.</p> : (
+    <table>
+      <thead><tr><th>Nombre</th><th>Slug</th><th><span class="sr-only">Acciones</span></th></tr></thead>
+      <tbody>{cats.map((c) => (
+        <tr>
+          <td class="main edit">
+            <form method="post" action="/api/admin/categories" class="acts">
+              <input type="hidden" name="id" value={c.id} />
+              <input name="name" value={c.name} required maxlength="80" aria-label={`Nombre de ${c.name}`} />
+              <button name="intent" value="rename">Renombrar</button>
+            </form>
+          </td>
+          <td data-label="Slug"><small>{c.slug}</small></td>
+          <td class="act">
+            <form method="post" action="/api/admin/categories" onsubmit="return confirm('Los libros de esta categoría quedarán sin categoría. ¿Eliminar?')">
+              <input type="hidden" name="id" value={c.id} />
+              <button class="danger" name="intent" value="delete">Eliminar</button>
+            </form>
+          </td>
+        </tr>
+      ))}</tbody>
+    </table>
+  )}
+  <section class="section">
+    <h2>Nueva categoría</h2>
+    <form method="post" action="/api/admin/categories" class="stack" style="margin-top:16px">
+      <label>Nombre<input name="name" required maxlength="80" placeholder="Ej.: Ensayo" /></label>
+      <div class="form-actions"><button class="primary" name="intent" value="create">Crear categoría</button></div>
+    </form>
+  </section>
+</Admin>

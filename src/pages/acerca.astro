@@ -1,0 +1,23 @@
+---
+import Base from '../layouts/Base.astro';
+import { site } from '../lib/site';
+---
+<Base title="Acerca del proyecto" description={`${site.name}: qué es, criterios de publicación, contacto y avisos legales.`}>
+  <article class="prose">
+    <h1>Acerca del proyecto</h1>
+    <h2 id="proyecto">El proyecto</h2>
+    <p>{site.name} es una biblioteca digital pública. Los administradores publican los libros; las personas visitantes exploran el catálogo, consultan las fichas y descargan los archivos EPUB. No hay cuentas, ni lector integrado, ni publicación comunitaria.</p>
+    <h2 id="criterios">Criterios de publicación</h2>
+    <p>Solo se publican obras de dominio público, con licencias compatibles con su distribución, o con autorización expresa de quien detenta los derechos.</p>
+    <h2 id="opds">Lectores de libros electrónicos (OPDS)</h2>
+    <p>Puedes explorar y descargar el catálogo directamente desde tu lector. En KOReader, Calibre, Moon+ Reader, Librera o Thorium añade un catálogo OPDS con esta dirección:</p>
+    <p><a href="/opds">{Astro.url.origin}/opds</a></p>
+    <p>Incluye novedades, selección destacada, categorías y búsqueda. No requiere cuenta.</p>
+    <h2 id="contacto">Contacto</h2>
+    <p>Para sugerencias, correcciones o solicitudes de retirada: <a href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a>.</p>
+    <h2 id="creditos">Créditos</h2>
+    <p>Catálogo, edición y mantenimiento a cargo de los administradores del proyecto.</p>
+    <h2 id="legal">Avisos legales</h2>
+    <p>Si crees que una obra se publica sin autorización, escríbenos y la retiraremos con prontitud. Los archivos se ofrecen tal cual, sin garantías.</p>
+  </article>
+</Base>

@@ -1,0 +1,55 @@
+---
+import '@fontsource/dm-sans/400.css';
+import '@fontsource/dm-sans/500.css';
+import '@fontsource/dm-sans/600.css';
+import '@fontsource/libre-caslon-display/400.css';
+import '../styles/global.css';
+import '../styles/admin.css';
+import { site } from '../lib/site';
+const { title = 'Administración', bare = false } = Astro.props;
+const msg = Astro.url.searchParams.get('msg');
+const admin = Astro.locals.admin;
+const path = Astro.url.pathname;
+const nav = [
+  ['Libros', '/admin', path === '/admin' || path.startsWith('/admin/libros')],
+  ['Portada', '/admin/portada', path.startsWith('/admin/portada')],
+  ['Categorías', '/admin/categorias', path.startsWith('/admin/categorias')],
+  ['Pie de página', '/admin/pie', path.startsWith('/admin/pie')],
+] as const;
+---
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#fafafa" />
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" href="/icono.svg" type="image/svg+xml" />
+  <title>{title} · {site.name}</title>
+</head>
+<body class="adm-body">
+  <div class="adm-shell">
+    {!bare && (
+      <header class="adm-head">
+        <div class="adm-top">
+          <a class="adm-brand" href="/admin" aria-label="Administración de {site.name}">
+            <img src={site.logoIcon} alt="" width="30" height="27" />
+            <span><small>Administración</small><b>{site.name}</b></span>
+          </a>
+          <div class="adm-user">
+            <a class="adm-site" href="/" target="_blank" rel="noopener">Ver sitio ↗</a>
+            <form method="post" action="/admin/salir"><button class="adm-exit" title={admin?.email} aria-label={`Salir (${admin?.email ?? ''})`}>Salir</button></form>
+          </div>
+        </div>
+        <nav class="adm-nav" aria-label="Administración">
+          {nav.map(([label, href, on]) => <a href={href} class={on ? 'active' : ''} aria-current={on ? 'page' : undefined}>{label}</a>)}
+        </nav>
+      </header>
+    )}
+    <main class={bare ? 'adm adm-bare' : 'adm'}>
+      {msg && <p class="msg" role="status">{msg}</p>}
+      <slot />
+    </main>
+  </div>
+</body>
+</html>
