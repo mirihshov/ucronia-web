@@ -17,8 +17,8 @@ create table books (
   language text not null default 'es',
   category_id uuid references categories(id) on delete set null,
   tags text[] not null default '{}',
-  cover_key text,                 -- clave del objeto en R2 (portadas)
-  epub_key text unique,           -- clave del objeto en R2 (EPUB)
+  cover_key text,                 -- clave del objeto en Supabase Storage (portadas)
+  epub_key text unique,           -- clave del objeto en Supabase Storage (EPUB)
   epub_size bigint,
   epub_sha256 text unique,        -- control de duplicados
   featured boolean not null default false,

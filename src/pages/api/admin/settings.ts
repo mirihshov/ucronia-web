@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { sniffImage } from '../../../lib/storage';
+import { putObject, removeObjects, sniffImage } from '../../../lib/storage';
 import { MAX_SLIDES, slideKeys } from '../../../lib/settings';
 
 const MAX_IMAGE = 3 * 1024 * 1024;
@@ -8,11 +8,10 @@ const go = (msg: string) =>
 
 export const POST: APIRoute = async ({ request, locals }) => {
   const db = locals.admin!.client; // sesión admin; RLS lo comprueba otra vez en la base
-  const bucket = (locals as any).runtime?.env?.BUCKET;
   const f = await request.formData();
   const intent = String(f.get('intent') ?? '');
   const clean = (x: unknown, n: number) => String(x ?? '').trim().replace(/\s+/g, ' ').slice(0, n);
-  const drop = async (key: string) => { if (bucket && key) { try { await bucket.delete(key); } catch { /* huérfano inocuo */ } } };
+  const drop = async (key: string) => { if (key) await removeObjects(db, [key]); }; // si falla queda un huérfano inocuo
 
   const { data: cur } = await db.from('site_settings').select('value').eq('key', 'hero').maybeSingle();
   const oldKeys = slideKeys(cur?.value);
@@ -40,13 +39,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
       const prev = clean(keys[i], 200);
       if (prev && oldKeys.has(prev) && String(modes[i] ?? 'keep') !== 'remove') image = prev; // solo claves ya guardadas
       if (hasFile) {
-        if (!bucket) { await rollback(); return go('Almacenamiento (R2) no configurado.'); }
         if (file.size > MAX_IMAGE) { await rollback(); return go(`La imagen del titular ${i + 1} supera 3 MB.`); }
         const buf = new Uint8Array(await file.arrayBuffer());
         const img = sniffImage(buf); // tipo real por firma, no por extensión
         if (!img) { await rollback(); return go(`La imagen del titular ${i + 1} debe ser JPG, PNG o WebP.`); }
         const key = `hero/${crypto.randomUUID()}.${img.ext}`;
-        try { await bucket.put(key, buf, { httpMetadata: { contentType: img.type } }); }
+        try { await putObject(db, key, buf, img.type); }
         catch { await rollback(); return go('Error al guardar la imagen. Inténtalo de nuevo.'); }
         uploaded.push(key); image = key;
       }

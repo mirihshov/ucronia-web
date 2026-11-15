@@ -1,35 +1,37 @@
 # Folio — Biblioteca digital
 
-Astro (SSR) + Cloudflare Pages/R2 + Supabase. Solo catálogo público y descarga; la administración llega en la Fase 2.
+Astro (SSR) + Cloudflare Pages (solo la web) + Supabase (base de datos, autenticación y **Storage** para los archivos). Solo catálogo público y descarga; la administración llega en la Fase 2.
 
 ## Puesta en marcha
 1. Supabase: crea un proyecto y ejecuta `supabase/migrations/0001_init.sql` en el SQL Editor.
-2. R2: crea un bucket privado (`npx wrangler r2 bucket create folio-libros`) y pon su nombre en `wrangler.toml`.
+2. Archivos: ejecuta también `supabase/migrations/0006_storage.sql`. Crea el bucket **privado** `ucronia-libros` en Supabase Storage y las políticas RLS (solo los admins escriben; el público solo lee portadas, fotos y los EPUB de libros publicados). No hace falta ningún servicio adicional ni clave secreta.
 3. Copia `.env.example` a `.env` y completa las variables (`PUBLIC_COVERS_BASE_URL` ya no se usa).
 4. `npm install && npm run dev`
-5. Cloudflare Pages: conecta el repo, build `npm run build`, salida `dist`, variables `PUBLIC_*` y binding R2 `BUCKET`.
+5. Cloudflare Pages: conecta el repo, build `npm run build`, salida `dist`, variables `PUBLIC_*`. No hay bindings de almacenamiento.
 
 ## Límites gratuitos (verificados nov 2026)
-- R2: 10 GB, 1 M ops clase A, 10 M clase B al mes; salida gratuita.
+- Supabase Storage (Free): **1 GB** de archivos en total, 50 MB máx. por archivo (el bucket limita a 20 MB y el panel a `MAX_EPUB_MB`), y 5 GB de egress + 5 GB en caché al mes. Si se supera un límite, el plan gratuito deja de servir peticiones (error 402) hasta el siguiente ciclo o hasta pasar a Pro: vigila *Settings → Usage*. Las descargas de EPUB se cachean 1 h en el borde de Cloudflare para gastar menos egress.
 - Supabase Free: 500 MB BD, 5 GB egress; el proyecto se pausa tras 7 días sin actividad (se mitiga con un ping programado, Fase 4).
 
 ## Estado
-- [x] Fase 1: portada, catálogo, fichas, buscador, categorías, descarga desde R2
+- [x] Fase 1: portada, catálogo, fichas, buscador, categorías, descarga desde Supabase Storage
 - [x] Fase 2: panel `/admin`, login, permisos, CRUD de fichas y categorías
   - Supabase → Authentication → Sign In: desactiva «Allow new users to sign up».
   - Crea tu usuario en Authentication → Users → Add user (auto-confirm), y ejecuta:
     `insert into admins (user_id) select id from auth.users where email = 'tu@correo';`
   - Ejecuta `supabase/migrations/0002_constraints.sql`.
-- [x] Fase 3: subida/validación de EPUB y portadas (R2)
+- [x] Fase 3: subida/validación de EPUB y portadas (Supabase Storage)
   - Ejecuta `supabase/migrations/0003_publish_needs_epub.sql`.
-  - Bucket R2 **privado** único (`folio-libros`): EPUB en `epub/`, portadas en `covers/` (se sirven por `/portadas/…`).
+  - Bucket **privado** único (`ucronia-libros`, migración `0006_storage.sql`): EPUB en `epub/`, portadas en `covers/` (se sirven por `/portadas/…`) y fotos de la portada en `hero/` (`/media/…`). Los EPUB solo salen por `/descargar/[slug]`.
+  - Permisos (RLS en `storage.objects`): escribir, reemplazar y borrar solo si `is_admin()`; leer, `anon` solo `covers/`, `hero/` y los EPUB cuyo libro está publicado. Si despublicas un libro, su EPUB deja de ser legible.
+  - Si ya tenías archivos en R2: `npm run migrar:r2` (opcional, ver DEPLOY.md). Las claves no cambian, así que la base de datos tampoco.
   - Límite configurable: `MAX_EPUB_MB` en `wrangler.toml`. Pruebas: `npm run test:epub`.
 - [x] Fase 4: respaldo en GitHub (repo aparte `folio-backup`; ver su README)
   - Ejecuta `supabase/migrations/0004_sync_log.sql`.
   - `wrangler.toml`: pon `GITHUB_BACKUP_REPO = "usuario/folio-backup"`. Secreto: `npx wrangler pages secret put GITHUB_DISPATCH_TOKEN` (local: `.dev.vars`).
 - [x] Rediseño: diseño de Figma Make «Biblioteca Digital Blanco y Negro» portado, marca «Biblioteca Ucronía» (textos y marca en `src/lib/site.ts`)
 - [x] Fase 5: rendimiento (fuentes autoalojadas, caché de borde 60 s), SEO (sitemap.xml, robots.txt, Open Graph, JSON-LD), seguridad (CSP, HSTS, no-store en /admin), pruebas
-  - `npm run test:epub` (validador) · `npm run test:smoke` (páginas y protección de /admin con Supabase simulado)
+  - `npm run test:epub` (validador) · `npm run test:storage` (capa de Storage con cliente simulado) · `npm run test:smoke` (páginas y protección de /admin con Supabase simulado)
   - Imagen del hero: remota (Unsplash) como en Figma; mejor descargarla a `public/` y cambiar `heroImage`.
 
 ## Portada editable y buscador
@@ -41,7 +43,7 @@ Astro (SSR) + Cloudflare Pages/R2 + Supabase. Solo catálogo público y descarga
 ## OPDS y logos
 - Feed OPDS 1.2 en `/opds` (novedades, destacados, categorías, todo, búsqueda). En KOReader/Calibre: añadir catálogo con `https://TU-DOMINIO/opds`.
 - Logos en `public/` (`logo-completo.svg` = texto + logo, principal en cabecera; `logo-texto.svg` = wordmark del pie; `icono.svg`; `ucronia-texto.svg`). Los SVG llevan el texto convertido a trazos (no dependen de la fuente STIX) + favicon, apple-touch-icon y `og-default.png`. Se configuran en `src/lib/site.ts`.
-- Admin → Portada: hasta 6 titulares con su foto (rotan solos en el inicio; flechas a los costados, teclado ←/→ y deslizar en móvil; se detienen con el ratón encima o el foco). Las fotos se suben a R2 (`hero/`) y se sirven por `/media/…`. Sin nada guardado se usan `site.heroSlides`. Con `prefers-reduced-motion` no rotan solos.
+- Admin → Portada: hasta 6 titulares con su foto (rotan solos en el inicio; flechas a los costados, teclado ←/→ y deslizar en móvil; se detienen con el ratón encima o el foco). Las fotos se suben a Supabase Storage (`hero/`) y se sirven por `/media/…`. Sin nada guardado se usan `site.heroSlides`. Con `prefers-reduced-motion` no rotan solos.
 - Manifiesto: la frase se ilumina al hacer scroll, queda anclada a la pantalla mientras pasan los principios (también en móvil, bajo la cabecera) y el principio activo se resalta (`src/scripts/motion.ts` + bloque «Manifiesto con movimiento» de `global.css`).
 
 ## Pie de página editable
@@ -50,4 +52,4 @@ Astro (SSR) + Cloudflare Pages/R2 + Supabase. Solo catálogo público y descarga
 - Se guarda en `site_settings` (clave `footer`; requiere `0005b_site_settings_solo.sql`). Admite el formato anterior (lista de enlaces). Pruebas: `npm run test:footer`.
 
 ## Despliegue
-Guía completa en **DEPLOY.md** (Cloudflare Pages + R2 + Supabase). Prueba local en el entorno de Cloudflare: `npm run build && npx wrangler pages dev dist`.
+Guía completa en **DEPLOY.md** (Cloudflare Pages + Supabase). Prueba local en el entorno de Cloudflare: `npm run build && npx wrangler pages dev dist`.

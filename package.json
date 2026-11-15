@@ -9,7 +9,9 @@
     "check": "astro check",
     "test:epub": "tsx scripts/test-epub.ts",
     "test:smoke": "node scripts/smoke.mjs",
-    "test:footer": "tsx scripts/test-footer.ts"
+    "test:footer": "tsx scripts/test-footer.ts",
+    "test:storage": "tsx scripts/test-storage.ts",
+    "migrar:r2": "node scripts/migrar-r2-a-supabase.mjs"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^12.0.0",

@@ -29,11 +29,27 @@ const mock = http.createServer((req, res) => {
 });
 await new Promise((r) => mock.listen(54399, '127.0.0.1', r));
 
+// `detached` + matar el grupo de procesos: `npx` lanza a `astro` como nieto y, si no, queda huérfano ocupando el puerto.
+let log = '';
 const dev = spawn('npx', ['astro', 'dev', '--port', '4398'], {
-  env: { ...process.env, PUBLIC_SUPABASE_URL: 'http://127.0.0.1:54399', PUBLIC_SUPABASE_ANON_KEY: 'test' }, stdio: 'ignore' });
-const stop = (code) => { dev.kill('SIGKILL'); mock.close(); process.exit(code); };
-const get = (p, o = {}) => fetch('http://127.0.0.1:4398' + p, { redirect: 'manual', ...o });
-for (let i = 0; i < 60; i++) { try { await get('/robots.txt'); break; } catch { await new Promise((r) => setTimeout(r, 1000)); } }
+  env: { ...process.env, PUBLIC_SUPABASE_URL: 'http://127.0.0.1:54399', PUBLIC_SUPABASE_ANON_KEY: 'test' },
+  stdio: ['ignore', 'pipe', 'pipe'], detached: true });
+for (const s of [dev.stdout, dev.stderr]) s.on('data', (d) => { log = (log + d).slice(-6000); });
+const stop = (code) => { try { process.kill(-dev.pid, 'SIGKILL'); } catch { /* ya terminó */ } mock.close(); process.exit(code); };
+let base = '';
+const get = (p, o = {}) => fetch(base + p, { redirect: 'manual', ...o });
+let up = false;
+for (let i = 0; i < 90 && !up; i++) {
+  // Astro avisa del puerto real (cambia de puerto si el pedido está ocupado): se usa ese, no uno fijo.
+  const m = log.match(/Local\s+http:\/\/localhost:(\d+)/);
+  if (m) { base = `http://127.0.0.1:${m[1]}`; try { await get('/robots.txt'); up = true; break; } catch { /* aún arrancando */ } }
+  await new Promise((r) => setTimeout(r, 1000));
+}
+if (!up) {
+  console.error('FAIL astro dev no arrancó.');
+  console.error('--- salida de astro dev (últimas líneas) ---\n' + (log.trim() || '(sin salida)'));
+  stop(1);
+}
 
 let bad = 0;
 const check = async (name, p, status, ...needles) => {
@@ -78,6 +94,6 @@ await check('API pie sin sesión', '/api/admin/footer', 401);
 await check('admin portada sin sesión', '/admin/portada', 302);
 await check('API ajustes sin sesión', '/api/admin/settings', 401);
 await check('API admin sin sesión', '/api/admin/books', 401);
-const post = await get('/api/admin/books', { method: 'POST', headers: { Origin: 'http://127.0.0.1:4398', Cookie: 'folio-at=falsa', 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'intent=delete&id=b1' });
+const post = await get('/api/admin/books', { method: 'POST', headers: { Origin: base, Cookie: 'folio-at=falsa', 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'intent=delete&id=b1' });
 console.log(post.status === 401 ? 'OK  ' : 'FAIL', 'borrado con cookie falsa →', post.status); if (post.status !== 401) bad++;
 stop(bad ? 1 : 0);

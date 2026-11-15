@@ -60,7 +60,7 @@ export async function getHero(client: SupabaseClient = supabase): Promise<Hero> 
   return (await getSlides(client))[0];
 }
 
-/** Claves de R2 que el valor guardado referencia (para limpiar fotos huérfanas). */
+/** Claves de Supabase Storage que el valor guardado referencia (para limpiar fotos huérfanas). */
 export function slideKeys(value: unknown): Set<string> {
   const out = new Set<string>();
   const v = (value ?? {}) as Record<string, unknown>;

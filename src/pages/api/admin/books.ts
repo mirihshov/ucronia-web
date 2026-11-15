@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { parseBookForm, slugify } from '../../../lib/admin';
 import { validateEpub } from '../../../lib/epub';
-import { sha256Hex, sniffImage } from '../../../lib/storage';
+import { putObject, removeObjects as removeFiles, sha256Hex, sniffImage } from '../../../lib/storage';
 import { notifyBackup } from '../../../lib/backup';
 
 const MAX_COVER = 2 * 1024 * 1024;
@@ -13,17 +13,11 @@ const isFile = (v: FormDataEntryValue | null): v is File => v instanceof File &&
 export const POST: APIRoute = async ({ request, locals }) => {
   const db = locals.admin!.client;
   const env = (locals as any).runtime?.env;
-  const bucket = env?.BUCKET;
   const f = await request.formData();
   const intent = String(f.get('intent') ?? '');
   const id = String(f.get('id') ?? '');
   const fail = (e: { code?: string; message: string }) =>
     go('/admin', e.code === '42501' ? 'Sin permiso.' : `Error: ${e.message}`);
-  const removeObjects = async (keys: (string | null | undefined)[]) => {
-    const list = keys.filter((k): k is string => !!k);
-    if (!list.length || !bucket) return true;
-    try { await bucket.delete(list); return true; } catch { return false; }
-  };
 
   if (intent === 'save') {
     const back = id ? `/admin/libros/${id}` : '/admin/libros/nuevo';
@@ -32,7 +26,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const epub = f.get('epub'), cover = f.get('cover');
     const hasEpub = isFile(epub), hasCover = isFile(cover);
     if (!id && !hasEpub) return go(back, 'Debes adjuntar un archivo EPUB.');
-    if ((hasEpub || hasCover) && !bucket) return go(back, 'Almacenamiento (R2) no configurado.');
 
     let old: { epub_key: string | null; cover_key: string | null } | null = null;
     if (id) {
@@ -50,34 +43,34 @@ export const POST: APIRoute = async ({ request, locals }) => {
         const buf = new Uint8Array(await epub.arrayBuffer());
         const v = validateEpub(buf);
         if (!v.ok) return go(back, v.error);
-        // Plan gratuito de Cloudflare: 10 ms de CPU por petición. Hashear un EPUB grande aquí lo agotaría,
+        // Plan gratuito de Cloudflare Pages: 10 ms de CPU por petición. Hashear un EPUB grande aquí lo agotaría,
         // así que, pasado cierto tamaño, se usa la huella calculada por el navegador del admin (si no llega, se calcula aquí).
         const given = String(f.get('epub_sha256') ?? '').toLowerCase();
         const sha = epub.size > 3 * 1048576 && /^[0-9a-f]{64}$/.test(given) ? given : await sha256Hex(buf);
         const { data: dup } = await db.from('books').select('id,title').eq('epub_sha256', sha).maybeSingle();
         if (dup && dup.id !== id) return go(back, `Ese EPUB ya existe en el catálogo: «${dup.title}».`);
         const key = `epub/${crypto.randomUUID()}.epub`;
-        await bucket.put(key, buf, { httpMetadata: { contentType: 'application/epub+zip' }, customMetadata: { sha256: sha } });
+        await putObject(db, key, buf, 'application/epub+zip'); // la huella queda en la base (epub_sha256)
         uploaded.push(key);
         Object.assign(patch, { epub_key: key, epub_size: buf.byteLength, epub_sha256: sha });
       }
       if (hasCover) {
-        if (cover.size > MAX_COVER) return go(back, 'La portada supera 2 MB.');
+        if (cover.size > MAX_COVER) { await removeFiles(db, uploaded); return go(back, 'La portada supera 2 MB.'); }
         const buf = new Uint8Array(await cover.arrayBuffer());
         const img = sniffImage(buf);
-        if (!img) return go(back, 'La portada debe ser JPG, PNG o WebP.');
+        if (!img) { await removeFiles(db, uploaded); return go(back, 'La portada debe ser JPG, PNG o WebP.'); }
         const key = `covers/${crypto.randomUUID()}.${img.ext}`;
-        await bucket.put(key, buf, { httpMetadata: { contentType: img.type } });
+        await putObject(db, key, buf, img.type);
         uploaded.push(key);
         patch.cover_key = key;
       }
     } catch {
-      await removeObjects(uploaded);
+      await removeFiles(db, uploaded);
       return go(back, 'Error al guardar en el almacenamiento. Inténtalo de nuevo.');
     }
 
     const dbError = async (e: { code?: string; message: string }) => {
-      await removeObjects(uploaded); // sin huérfanos si la base falla
+      await removeFiles(db, uploaded); // sin huérfanos si la base falla
       return e.code === '23505' && e.message.includes('epub_sha256')
         ? go(back, 'Ese EPUB ya existe en el catálogo.') : fail(e);
     };
@@ -95,10 +88,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
         if (!error) { savedId = data.id; done = true; }
         else if (!(error.code === '23505' && error.message.includes('slug'))) return dbError(error);
       }
-      if (!done) { await removeObjects(uploaded); return go(back, 'No se pudo generar un slug único.'); }
+      if (!done) { await removeFiles(db, uploaded); return go(back, 'No se pudo generar un slug único.'); }
     }
     // Solo tras guardar con éxito se borran los archivos reemplazados.
-    if (old) await removeObjects([hasEpub ? old.epub_key : null, hasCover ? old.cover_key : null]);
+    if (old) await removeFiles(db, [hasEpub ? old.epub_key : null, hasCover ? old.cover_key : null]);
     notifyBackup(locals);
     return go(`/admin/libros/${savedId}`, id ? 'Cambios guardados.' : 'Libro creado como borrador. Ya puedes publicarlo.');
   }
@@ -125,8 +118,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const { error } = await db.from('books').delete().eq('id', id);
     if (error) return fail(error);
     notifyBackup(locals);
-    const clean = await removeObjects([data?.epub_key, data?.cover_key]);
-    return go('/admin', clean ? 'Libro y archivos eliminados.' : 'Libro eliminado, pero no se pudieron borrar sus archivos de R2.');
+    const clean = await removeFiles(db, [data?.epub_key, data?.cover_key]);
+    return go('/admin', clean ? 'Libro y archivos eliminados.' : 'Libro eliminado, pero no se pudieron borrar sus archivos del almacenamiento.');
   }
   return go('/admin', 'Acción no válida.');
 };
