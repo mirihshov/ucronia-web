@@ -37,7 +37,26 @@ const jsonLd = JSON.stringify(ld).replace(/</g, '\\u003c');
         {book.epub_key && <><dt>Formato</dt><dd>EPUB · {formatSize(book.epub_size)}</dd></>}
         {book.tags.length > 0 && <><dt>Etiquetas</dt><dd>{book.tags.join(', ')}</dd></>}
       </dl>
-      {book.epub_key && <a class="more-button" href={`/descargar/${book.slug}`} rel="nofollow">Descargar EPUB <span>↓</span></a>}
+      {book.epub_key && (
+        <div class="detail-actions">
+          <a class="more-button" href={`/descargar/${book.slug}`} rel="nofollow">Descargar EPUB <span>↓</span></a>
+          <button type="button" class="more-button ghost" data-preview data-url={`/vista-previa/${book.slug}`} aria-haspopup="dialog" aria-controls="preview-dialog">Vista previa <span>→</span></button>
+        </div>
+      )}
     </div>
   </article>
+  {book.epub_key && (
+    <dialog id="preview-dialog" class="preview" aria-labelledby="preview-title">
+      <div class="preview-head">
+        <div><p>Vista previa</p><h2 id="preview-title">{book.title}</h2></div>
+        <button type="button" class="preview-close" data-preview-close aria-label="Cerrar vista previa">✕</button>
+      </div>
+      <div class="preview-body" data-preview-body lang={book.language} tabindex="0"></div>
+      <div class="preview-foot">
+        <small data-preview-note>Solo se muestra el comienzo del libro.</small>
+        <a href={`/descargar/${book.slug}`} rel="nofollow">Descargar EPUB ↓</a>
+      </div>
+    </dialog>
+  )}
+  <script>import '../../scripts/preview';</script>
 </Base>

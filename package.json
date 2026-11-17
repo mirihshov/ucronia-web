@@ -11,6 +11,7 @@
     "test:smoke": "node scripts/smoke.mjs",
     "test:footer": "tsx scripts/test-footer.ts",
     "test:about": "tsx scripts/test-about.ts",
+    "test:preview": "tsx scripts/test-preview.ts",
     "test:storage": "tsx scripts/test-storage.ts",
     "migrar:r2": "node scripts/migrar-r2-a-supabase.mjs"
   },
