@@ -1,0 +1,68 @@
+---
+import Admin from '../../layouts/Admin.astro';
+import AboutFields from '../../components/admin/AboutFields.astro';
+import { getAbout, MAX_SECTIONS, MAX_PAGE_TITLE } from '../../lib/about';
+const about = await getAbout(Astro.locals.admin!.client);
+---
+<Admin title="Acerca de">
+  <div class="adm-title"><div><p class="kicker">Sitio</p><h1>Acerca del proyecto</h1><p class="adm-lead">Título y secciones de la página <a href="/acerca" target="_blank" rel="noopener">/acerca</a>. Puedes añadir, ordenar y quitar secciones (hasta {MAX_SECTIONS}). Los cambios se ven en la web en menos de un minuto.</p></div></div>
+  <form method="post" action="/api/admin/about" class="stack wide" id="about-form">
+    <input type="hidden" name="intent" value="save" />
+    <label>Título de la página<input name="page_title" maxlength={MAX_PAGE_TITLE} value={about.title} required /></label>
+
+    <h2 class="section" style="margin-top:14px">Secciones</h2>
+    <p class="note">En el texto, una línea en blanco separa párrafos. Los correos y las direcciones https://… se convierten solos en enlaces; también puedes escribir [texto](/ruta) o [texto](https://…). Marcadores: <code>{'{nombre}'}</code> (nombre del sitio), <code>{'{correo}'}</code> (correo de contacto) y <code>{'{origen}'}</code> (dirección del sitio).</p>
+    <div class="slides" data-about data-max={MAX_SECTIONS}>
+      {about.sections.map((s, i) => <AboutFields section={s} n={i + 1} />)}
+    </div>
+    <template id="about-tpl"><AboutFields n={0} /></template>
+    <div class="add-row">
+      <button type="button" class="btn-add" data-add>+ Añadir sección</button>
+      <p class="note" data-limit hidden>Máximo {MAX_SECTIONS} secciones.</p>
+    </div>
+    <div class="form-actions">
+      <button class="primary">Guardar</button>
+      <a class="btn-s" href="/acerca" target="_blank" rel="noopener">Ver página</a>
+    </div>
+  </form>
+  <form method="post" action="/api/admin/about" onsubmit="return confirm('¿Volver al texto original de Acerca del proyecto?')" class="section">
+    <input type="hidden" name="intent" value="reset" />
+    <button class="danger">Restablecer texto original</button>
+  </form>
+  <script is:inline>
+    (() => {
+      const box = document.querySelector('[data-about]');
+      const max = Number(box.dataset.max);
+      const form = document.getElementById('about-form');
+      const cards = () => [...box.querySelectorAll('[data-about-card]')];
+      const refresh = () => {
+        const cs = cards();
+        cs.forEach((c, i) => {
+          c.querySelector('[data-n]').textContent = i + 1;
+          c.querySelector('[data-up]').disabled = i === 0;
+          c.querySelector('[data-down]').disabled = i === cs.length - 1;
+          c.querySelector('[data-remove]').disabled = cs.length === 1;
+        });
+        form.querySelector('[data-add]').disabled = cs.length >= max;
+        form.querySelector('[data-limit]').hidden = cs.length < max;
+      };
+      form.addEventListener('click', (e) => {
+        const c = e.target.closest('[data-about-card]');
+        if (e.target.closest('[data-add]')) {
+          if (cards().length >= max) return;
+          const node = document.getElementById('about-tpl').content.firstElementChild.cloneNode(true);
+          box.appendChild(node); refresh(); node.querySelector('[data-title]').focus();
+        } else if (c && e.target.closest('[data-up]') && c.previousElementSibling) { box.insertBefore(c, c.previousElementSibling); refresh(); }
+        else if (c && e.target.closest('[data-down]') && c.nextElementSibling) { box.insertBefore(c.nextElementSibling, c); refresh(); }
+        else if (c && e.target.closest('[data-remove]') && cards().length > 1) {
+          if (confirm('¿Quitar esta sección? Se aplica al guardar.')) { c.remove(); refresh(); }
+        }
+      });
+      form.addEventListener('input', (e) => {
+        const c = e.target.closest('[data-about-card]');
+        if (c && e.target.matches('[data-title]')) c.querySelector('[data-t]').textContent = e.target.value || 'Nueva sección';
+      });
+      refresh();
+    })();
+  </script>
+</Admin>

@@ -57,7 +57,7 @@ Las variables (`MAX_EPUB_MB`, `GITHUB_BACKUP_REPO`) salen de `wrangler.toml`; no
 Abre `https://biblioteca-ucronia.pages.dev` y comprueba:
 - `/`, `/catalogo`, `/acerca`, `/opds`, `/sitemap.xml`, `/robots.txt`.
 - `/admin` → entra con tu usuario → crea un libro con un EPUB y una portada → publícalo → descárgalo desde su ficha.
-- Admin → Portada y Pie de página: edita y revisa que se vea en la web (hasta 1 minuto).
+- Admin → Portada, Acerca de y Pie de página: edita y revisa que se vea en la web (hasta 1 minuto).
 - En un lector (KOReader, Calibre…): añade `https://TU-DOMINIO/opds`.
 
 ## 7. Dominio propio

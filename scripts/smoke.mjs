@@ -14,6 +14,9 @@ const mock = http.createServer((req, res) => {
   const t = u.pathname.split('/').pop();
   let rows = t === 'categories' ? cats : t === 'books' ? books : t === 'site_settings' ? [
     ...(process.env.NO_HERO ? [] : [{ key: 'hero', value: { kicker: 'Kicker editado', title: 'Titular editado por admin', deck: 'Bajada editada', image: 'hero/abc-123.jpg', caption: '' } }]),
+    ...(process.env.NO_ABOUT ? [] : [{ key: 'about', value: { title: 'Acerca editado', sections: [
+      { id: 'sec-nueva', title: 'Sección escrita por admin', body: 'Primer párrafo con hola@ucronia.org y [mi enlace](/catalogo).\n\nSegundo [malo](javascript:alert(3)) párrafo.' },
+      { id: 'legal', title: 'Avisos legales', body: 'Texto legal editado.' } ] } }]),
     ...(process.env.NO_FOOTER ? [] : [{ key: 'footer', value: { tagline: 'Pie editado desde el panel', note: 'Nota editada', columns: [
       { title: 'Servicio', text: 'Avda. Principal 123\nescribe a hola@ucronia.org', links: [{ label: 'Mi enlace', url: '/acerca#legal' }, { label: 'Externo', url: 'https://example.org' }, { label: 'Malo', url: 'javascript:alert(1)' }] },
       { title: 'Horarios', text: 'Lunes a jueves', links: [] } ],
@@ -69,6 +72,13 @@ await check('búsqueda sin resultados', '/catalogo?q=zzz', 200, 'noindex');
 await check('ficha', '/libro/libro-3', 200, 'Descargar EPUB', 'application/ld+json', '"@type":"Book"', 'EPUB · 121 KB');
 await check('ficha inexistente', '/libro/no-existe', 404);
 await check('acerca', '/acerca', 200, 'Avisos legales');
+if (!process.env.NO_ABOUT) {
+  await check('acerca editable: título, secciones, anclas y enlaces', '/acerca', 200, 'Acerca editado', 'id="sec-nueva"', 'Sección escrita por admin', 'href="mailto:hola@ucronia.org"', 'href="/catalogo"', 'Texto legal editado.');
+  const ab = await (await get('/acerca')).text();
+  const okAb = !ab.includes('href="javascript:') && !ab.includes('id="proyecto"');
+  console.log(okAb ? 'OK  ' : 'FAIL', 'acerca: javascript: filtrado y secciones por defecto reemplazadas'); if (!okAb) bad++;
+} else await check('acerca por defecto', '/acerca', 200, 'Acerca del proyecto', 'id="proyecto"', 'id="criterios"', 'id="opds"', 'id="contacto"', 'id="legal"', 'href="mailto:contacto@ejemplo.org"', '/opds');
+await check('admin acerca sin sesión', '/admin/acerca', 302);
 await check('robots', '/robots.txt', 200, 'Disallow: /admin', 'Sitemap:');
 await check('sitemap', '/sitemap.xml', 200, '/libro/libro-1', '<lastmod>2026-02-01</lastmod>');
 await check('admin sin sesión → login', '/admin', 302);

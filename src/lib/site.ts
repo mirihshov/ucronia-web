@@ -42,5 +42,16 @@ export const site = {
     { title: 'Edición cuidada', text: 'Cada ficha lleva autor, año, idioma y editorial, y cada archivo se valida antes de publicarse.' },
     { title: 'Derechos en regla', text: 'Solo publicamos obras de dominio público, con licencia compatible o con autorización expresa.' },
   ],
+  // «Acerca del proyecto»: textos por defecto. Los admins los editan en Admin → Acerca de.
+  // Marcadores: {nombre}, {correo}, {origen}. Línea en blanco = párrafo nuevo. `id` = ancla (/acerca#id): los enlaces del pie la usan.
+  aboutTitle: 'Acerca del proyecto',
+  aboutSections: [
+    { id: 'proyecto', title: 'El proyecto', body: '{nombre} es una biblioteca digital pública. Los administradores publican los libros; las personas visitantes exploran el catálogo, consultan las fichas y descargan los archivos EPUB. No hay cuentas, ni lector integrado, ni publicación comunitaria.' },
+    { id: 'criterios', title: 'Criterios de publicación', body: 'Solo se publican obras de dominio público, con licencias compatibles con su distribución, o con autorización expresa de quien detenta los derechos.' },
+    { id: 'opds', title: 'Lectores de libros electrónicos (OPDS)', body: 'Puedes explorar y descargar el catálogo directamente desde tu lector. En KOReader, Calibre, Moon+ Reader, Librera o Thorium añade un catálogo OPDS con esta dirección:\n\n{origen}/opds\n\nIncluye novedades, selección destacada, categorías y búsqueda. No requiere cuenta.' },
+    { id: 'contacto', title: 'Contacto', body: 'Para sugerencias, correcciones o solicitudes de retirada: {correo}.' },
+    { id: 'creditos', title: 'Créditos', body: 'Catálogo, edición y mantenimiento a cargo de los administradores del proyecto.' },
+    { id: 'legal', title: 'Avisos legales', body: 'Si crees que una obra se publica sin autorización, escríbenos y la retiraremos con prontitud. Los archivos se ofrecen tal cual, sin garantías.' },
+  ],
   contactEmail: 'contacto@ejemplo.org',
 };

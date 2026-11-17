@@ -51,5 +51,10 @@ Astro (SSR) + Cloudflare Pages (solo la web) + Supabase (base de datos, autentic
 - Admin → **Pie de página**. «Restablecer» vuelve a las columnas por defecto de `src/lib/site.ts` (`footerColumns`). Las redes no tienen valores por defecto: solo se muestran las que se configuren.
 - Se guarda en `site_settings` (clave `footer`; requiere `0005b_site_settings_solo.sql`). Admite el formato anterior (lista de enlaces). Pruebas: `npm run test:footer`.
 
+## «Acerca del proyecto» editable
+- Admin → **Acerca de**: título de la página y hasta 12 secciones (añadir, ordenar con ↑↓, quitar). Cada sección tiene título, texto y un **ancla** (`/acerca#ancla`); si se deja en blanco se genera del título. Las anclas por defecto (`proyecto`, `criterios`, `opds`, `contacto`, `legal`) son las que enlaza el pie de página: conviene no cambiarlas.
+- Texto: línea en blanco = párrafo nuevo; correos y direcciones `https://…` se enlazan solos; `[texto](/ruta)` también; marcadores `{nombre}`, `{correo}` y `{origen}`. Solo se aceptan enlaces `/ruta`, `https://` y `mailto:` (nunca `javascript:`), y todo se escapa al mostrarlo (no se admite HTML).
+- «Restablecer» vuelve a los textos de `src/lib/site.ts` (`aboutTitle`, `aboutSections`). Se guarda en `site_settings` (clave `about`; no necesita migración nueva). Pruebas: `npm run test:about`.
+
 ## Despliegue
 Guía completa en **DEPLOY.md** (Cloudflare Pages + Supabase). Prueba local en el entorno de Cloudflare: `npm run build && npx wrangler pages dev dist`.

@@ -1,0 +1,22 @@
+---
+// Campos de una sección de «Acerca del proyecto». Los nombres se repiten: el servidor los lee en el orden del formulario.
+import { MAX_TITLE, MAX_ID, MAX_BODY } from '../../lib/about';
+const { section, n = 1 } = Astro.props as { section?: { id: string; title: string; body: string }; n?: number };
+const s = section ?? { id: '', title: '', body: '' };
+---
+<fieldset class="slide-card" data-about-card>
+  <div class="slide-head">
+    <p class="slide-num"><span data-n>{n}</span><b data-t>{s.title || 'Nueva sección'}</b></p>
+    <div class="acts">
+      <button type="button" class="ico" data-up aria-label="Subir">↑</button>
+      <button type="button" class="ico" data-down aria-label="Bajar">↓</button>
+      <button type="button" class="ico danger" data-remove aria-label="Quitar esta sección">✕</button>
+    </div>
+  </div>
+  <label>Título<input name="sec_title" maxlength={MAX_TITLE} value={s.title} data-title required /></label>
+  <label>Texto<textarea name="sec_body" rows="7" maxlength={MAX_BODY}>{s.body}</textarea></label>
+  <label>Ancla del enlace (opcional)
+    <input name="sec_id" maxlength={MAX_ID} value={s.id} placeholder="se crea a partir del título" pattern="[a-z0-9\-]*" inputmode="url" autocapitalize="none" spellcheck="false" />
+    <span class="note">Letras minúsculas, números y guiones. Sirve para enlazar a esta sección: /acerca#<b>{s.id || 'ancla'}</b>. Si ya hay enlaces (por ejemplo, en el pie de página), no la cambies.</span>
+  </label>
+</fieldset>
