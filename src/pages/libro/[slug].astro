@@ -39,22 +39,35 @@ const jsonLd = JSON.stringify(ld).replace(/</g, '\\u003c');
       </dl>
       {book.epub_key && (
         <div class="detail-actions">
-          <a class="more-button" href={`/descargar/${book.slug}`} rel="nofollow">Descargar EPUB <span>↓</span></a>
+          <a class="more-button" href={`/descargar/${book.slug}`} rel="nofollow"><b>Descargar<em> EPUB</em></b> <span>↓</span></a>
           <button type="button" class="more-button ghost" data-preview data-url={`/vista-previa/${book.slug}`} aria-haspopup="dialog" aria-controls="preview-dialog">Vista previa <span>→</span></button>
         </div>
       )}
     </div>
   </article>
   {book.epub_key && (
-    <dialog id="preview-dialog" class="preview" aria-labelledby="preview-title">
-      <div class="preview-head">
-        <div><p>Vista previa</p><h2 id="preview-title">{book.title}</h2></div>
-        <button type="button" class="preview-close" data-preview-close aria-label="Cerrar vista previa">✕</button>
+    <dialog id="preview-dialog" class="reader" aria-label={`Vista previa de ${book.title}`} data-title={book.title} data-author={book.author} data-dl={`/descargar/${book.slug}`}>
+      <div class="reader-bar">
+        <p class="reader-title"><small>Vista previa</small><b>{book.title}</b></p>
+        <div class="reader-tools">
+          <button type="button" data-fs="-1" aria-label="Letra más pequeña">A<small>−</small></button>
+          <button type="button" data-fs="1" aria-label="Letra más grande">A<small>+</small></button>
+          <a class="reader-dl" href={`/descargar/${book.slug}`} rel="nofollow" data-astro-reload>Descargar EPUB ↓</a>
+          <button type="button" data-preview-close aria-label="Cerrar vista previa">✕</button>
+        </div>
       </div>
-      <div class="preview-body" data-preview-body lang={book.language} tabindex="0"></div>
-      <div class="preview-foot">
-        <small data-preview-note>Solo se muestra el comienzo del libro.</small>
-        <a href={`/descargar/${book.slug}`} rel="nofollow">Descargar EPUB ↓</a>
+      <div class="reader-stage">
+        <div class="book">
+          <div class="view" data-view tabindex="0" aria-label="Texto de la vista previa" lang={book.language}>
+            <div class="pages" data-pages></div>
+          </div>
+          <span class="folio folio-l" data-folio-l aria-hidden="true"></span><span class="folio folio-r" data-folio-r aria-hidden="true"></span>
+        </div>
+      </div>
+      <div class="reader-foot">
+        <button type="button" data-prev aria-label="Página anterior">‹</button>
+        <div class="reader-prog"><span data-label aria-live="polite"></span><i><b data-bar></b></i></div>
+        <button type="button" data-next aria-label="Página siguiente">›</button>
       </div>
     </dialog>
   )}

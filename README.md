@@ -56,9 +56,11 @@ Astro (SSR) + Cloudflare Pages (solo la web) + Supabase (base de datos, autentic
 - Texto: línea en blanco = párrafo nuevo; correos y direcciones `https://…` se enlazan solos; `[texto](/ruta)` también; marcadores `{nombre}`, `{correo}` y `{origen}`. Solo se aceptan enlaces `/ruta`, `https://` y `mailto:` (nunca `javascript:`), y todo se escapa al mostrarlo (no se admite HTML).
 - «Restablecer» vuelve a los textos de `src/lib/site.ts` (`aboutTitle`, `aboutSections`). Se guarda en `site_settings` (clave `about`; no necesita migración nueva). Pruebas: `npm run test:about`.
 
-## Vista previa del EPUB
-- En la ficha de cada libro, junto a «Descargar EPUB», el botón **Vista previa** abre una ventana con el comienzo del libro (solo texto, sin imágenes). Nunca muestra el EPUB completo: tope de ~5.000 caracteres (≈800 palabras) y, en libros cortos, como mucho el 25 % del contenido; los libros diminutos no tienen vista previa.
-- Se salta portada, índice, créditos y páginas casi vacías, y se corta en una frase completa. `GET /vista-previa/[slug]` devuelve JSON, solo para libros publicados, con caché de borde de 1 h; el texto se pinta con `textContent` (sin HTML). Código: `src/lib/epub-preview-parse.ts` (lógica pura), `src/lib/epub-preview.ts` (lectura del ZIP con fflate), `src/scripts/preview.ts` (ventana) y estilos al final de `global.css`. El tope se cambia en `PREVIEW_MAX_CHARS`. Pruebas: `npm run test:preview`.
+## Vista previa del EPUB (lector)
+- En la ficha de cada libro, junto a «Descargar EPUB», el botón **Vista previa** abre un lector: en escritorio un libro abierto de dos páginas; en móvil, una página a pantalla completa. Se pasa de página con los botones ‹ ›, las flechas del teclado (también RePág/AvPág, Inicio y Fin), deslizando o tocando el tercio izquierdo/derecho (móvil). Incluye portada, números de página, barra de progreso, tamaño de letra A−/A+ (se recuerda) y una página final con el enlace de descarga.
+- En móvil, «Descargar» y «Vista previa» van en una barra fija al pie de la ficha.
+- Nunca muestra el EPUB completo: tope de ~5.000 caracteres (≈800 palabras) y, en libros cortos, como mucho el 25 % del contenido; los libros diminutos no tienen vista previa. Solo texto, sin imágenes. Salta portada, índice y créditos, y corta en una frase completa.
+- `GET /vista-previa/[slug]` devuelve JSON (solo libros publicados, caché de borde de 1 h). Código: `src/lib/epub-preview-parse.ts` (lógica pura), `src/lib/epub-preview.ts` (lectura del ZIP con fflate), `src/lib/reader-math.ts` (paginación), `src/scripts/preview.ts` (lector) y estilos al final de `global.css`. El tope se cambia en `PREVIEW_MAX_CHARS`. Pruebas: `npm run test:preview`.
 
 ## Despliegue
 Guía completa en **DEPLOY.md** (Cloudflare Pages + Supabase). Prueba local en el entorno de Cloudflare: `npm run build && npx wrangler pages dev dist`.

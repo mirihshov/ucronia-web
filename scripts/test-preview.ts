@@ -1,5 +1,6 @@
 import { zipSync, strToU8 } from 'fflate';
 import { buildPreview } from '../src/lib/epub-preview';
+import { geometry, clamp, keepPosition, pageLabel } from '../src/lib/reader-math';
 import { parseContainer, parseOpf, resolvePath, htmlToBlocks, decodeEntities, cutText, fill, finalize, previewBudget, isFrontMatter, PREVIEW_MAX_CHARS, type Block } from '../src/lib/epub-preview-parse';
 
 let bad = 0;
@@ -39,6 +40,20 @@ const done = fill(st, [{ t: 'h', x: 'T' }, { t: 'p', x: 'a'.repeat(100) }, { t: 
 t('fill para en el tope y no pasa de él', done && st.used <= 300 && !st.out.some((b) => b.x === 'nunca'));
 t('finalize quita títulos sueltos al final', finalize([{ t: 'p', x: 'a' }, { t: 'h', x: 'T' }]).length === 1);
 t('presupuesto: tope máximo, y libros diminutos sin vista previa', previewBudget(10_000_000) === PREVIEW_MAX_CHARS && previewBudget(500) === 0 && previewBudget(10_000) <= 2500);
+
+// ---- paginación del lector ----
+const W2 = 900, g2 = geometry(W2, W2, 2); // todo cabe en una vista
+t('un texto corto cabe en un solo pliego', g2.cols === 2 && g2.spreads === 1 && g2.step === W2 + 80);
+const colW2 = (W2 - 80) / 2, cols9 = 9, sw9 = cols9 * colW2 + (cols9 - 1) * 80;
+const g9 = geometry(W2, sw9, 2);
+t('9 columnas en escritorio = 5 pliegos', g9.cols === 9 && g9.spreads === 5);
+t('el desplazamiento por pliego es ancho + hueco', g9.step === 980);
+const sw1 = 7 * 360 + 6 * 40, g1 = geometry(360, sw1, 1);
+t('móvil: 7 columnas = 7 páginas, una por vez', g1.cols === 7 && g1.spreads === 7 && g1.step === 400);
+t('páginas: etiquetas de pliego y de página única', pageLabel(1, g9).text === 'Páginas 3–4 de 9' && pageLabel(4, g9).text === 'Página 9 de 9' && pageLabel(0, g1).text === 'Página 1 de 7');
+t('clamp no se sale del libro', clamp(-3, 5) === 0 && clamp(99, 5) === 4 && clamp(2.6, 5) === 3);
+t('cambiar el tamaño conserva la posición relativa', keepPosition(0, 9, 14) === 0 && keepPosition(8, 9, 14) === 13 && keepPosition(4, 9, 15) === 7 && keepPosition(3, 1, 6) === 0);
+t('sin ancho no hay división por cero', geometry(360, 0, 1).cols >= 1);
 
 // ---- de punta a punta con un EPUB real (ZIP) ----
 const container = '<?xml version="1.0"?><container><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>';
