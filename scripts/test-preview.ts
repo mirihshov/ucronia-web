@@ -50,7 +50,7 @@ t('9 columnas en escritorio = 5 pliegos', g9.cols === 9 && g9.spreads === 5);
 t('el desplazamiento por pliego es ancho + hueco', g9.step === 980);
 const sw1 = 7 * 360 + 6 * 40, g1 = geometry(360, sw1, 1);
 t('móvil: 7 columnas = 7 páginas, una por vez', g1.cols === 7 && g1.spreads === 7 && g1.step === 400);
-t('páginas: etiquetas de pliego y de página única', pageLabel(1, g9).text === 'Páginas 3–4 de 9' && pageLabel(4, g9).text === 'Página 9 de 9' && pageLabel(0, g1).text === 'Página 1 de 7');
+t('páginas: etiqueta compacta de pliego y de página única', pageLabel(1, g9).text === '3–4 / 9' && pageLabel(4, g9).text === '9 / 9' && pageLabel(0, g1).text === '1 / 7');
 t('clamp no se sale del libro', clamp(-3, 5) === 0 && clamp(99, 5) === 4 && clamp(2.6, 5) === 3);
 t('cambiar el tamaño conserva la posición relativa', keepPosition(0, 9, 14) === 0 && keepPosition(8, 9, 14) === 13 && keepPosition(4, 9, 15) === 7 && keepPosition(3, 1, 6) === 0);
 t('sin ancho no hay división por cero', geometry(360, 0, 1).cols >= 1);

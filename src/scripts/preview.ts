@@ -6,8 +6,7 @@ import { geometry, clamp, keepPosition, pageLabel, type Geometry } from '../lib/
 type Block = { t: 'h' | 'p'; x: string };
 type Data = { blocks: Block[]; words: number };
 type Active = {
-  dlg: HTMLDialogElement; view: HTMLElement; pages: HTMLElement; book: HTMLElement;
-  bar: HTMLElement; label: HTMLElement; fl: HTMLElement; fr: HTMLElement;
+  dlg: HTMLDialogElement; view: HTMLElement; pages: HTMLElement; book: HTMLElement; label: HTMLElement;
   prev: HTMLButtonElement; next: HTMLButtonElement; ro: ResizeObserver;
   i: number; g: Geometry;
 };
@@ -43,8 +42,6 @@ const q = <T extends HTMLElement>(dlg: HTMLElement, sel: string) => dlg.querySel
 function idle(dlg: HTMLDialogElement, msg: string) {
   q(dlg, '[data-pages]').replaceChildren(el('p', msg, 'pv-msg'));
   q(dlg, '[data-label]').textContent = '';
-  q(dlg, '[data-folio-l]').textContent = q(dlg, '[data-folio-r]').textContent = '';
-  q(dlg, '[data-bar]').style.width = '0';
   for (const b of dlg.querySelectorAll<HTMLButtonElement>('[data-prev],[data-next]')) b.disabled = true;
 }
 
@@ -56,9 +53,6 @@ function go(i: number, animate: boolean) {
   a.pages.style.transform = `translate3d(${-a.i * a.g.step}px,0,0)`;
   const p = pageLabel(a.i, a.g);
   a.label.textContent = p.text;
-  a.fl.textContent = String(p.first);
-  a.fr.textContent = p.last > p.first ? String(p.last) : '';
-  a.bar.style.width = `${((a.i + 1) / a.g.spreads) * 100}%`;
   a.prev.disabled = a.i === 0;
   a.next.disabled = a.i >= a.g.spreads - 1;
 }
@@ -78,24 +72,21 @@ function layout(keep: boolean) {
   a.g = geometry(W, a.pages.scrollWidth, n); // lee scrollWidth: fuerza el reparto en columnas
   a.book.classList.toggle('two', n === 2);
   go(keep ? keepPosition(oldI, old, a.g.spreads) : 0, false);
-  q(a.dlg, '[data-fs="-1"]').toggleAttribute('disabled', fs === 0);
-  q(a.dlg, '[data-fs="1"]').toggleAttribute('disabled', fs === SIZES.length - 1);
 }
 
 function mount(dlg: HTMLDialogElement, d: Data) {
   const title = dlg.dataset.title ?? '', author = dlg.dataset.author ?? '', dl = dlg.dataset.dl ?? '#';
   const cover = el('div', '', 'pv-page pv-title');
-  cover.append(el('small', 'Vista previa'), el('h2', title), el('p', author, 'pv-by'), el('em', 'Solo el comienzo del libro'));
+  cover.append(el('small', 'Vista previa'), el('h2', title), el('p', author, 'pv-by'));
   const end = el('div', '', 'pv-page pv-end');
   const dlLink = el('a', 'Descargar EPUB ↓', 'more-button') as HTMLAnchorElement;
   dlLink.href = dl; dlLink.rel = 'nofollow'; dlLink.tabIndex = -1; dlLink.setAttribute('data-astro-reload', '');
-  end.append(el('small', 'Fin de la vista previa'), el('h3', 'Sigue leyendo'), el('p', 'Descarga el EPUB completo, gratis y sin registro.'), dlLink);
+  end.append(el('small', 'Fin de la vista previa'), dlLink);
 
   const pages = q(dlg, '[data-pages]');
   pages.replaceChildren(cover, ...d.blocks.map((b) => el(b.t === 'h' ? 'h3' : 'p', b.x)), end);
   const a: Active = {
-    dlg, pages, view: q(dlg, '[data-view]'), book: q(dlg, '.book'), bar: q(dlg, '[data-bar]'), label: q(dlg, '[data-label]'),
-    fl: q(dlg, '[data-folio-l]'), fr: q(dlg, '[data-folio-r]'), prev: q<HTMLButtonElement>(dlg, '[data-prev]'), next: q<HTMLButtonElement>(dlg, '[data-next]'),
+    dlg, pages, view: q(dlg, '[data-view]'), book: q(dlg, '.book'), label: q(dlg, '[data-label]'), prev: q<HTMLButtonElement>(dlg, '[data-prev]'), next: q<HTMLButtonElement>(dlg, '[data-next]'),
     ro: new ResizeObserver(() => layout(true)), i: 0, g: { n: 1, gap: 40, step: 0, cols: 1, spreads: 1 },
   };
   active = a;
@@ -123,9 +114,8 @@ document.addEventListener('click', async (e) => {
   if (active && dlg.open) {
     if (t.closest('[data-prev]')) { go(active.i - 1, true); return; }
     if (t.closest('[data-next]')) { go(active.i + 1, true); return; }
-    const f = t.closest<HTMLElement>('[data-fs]');
-    if (f) {
-      fs = Math.max(0, Math.min(SIZES.length - 1, fs + Number(f.dataset.fs)));
+    if (t.closest('[data-fs]')) { // un solo botón «Aa»: recorre los tamaños
+      fs = (fs + 1) % SIZES.length;
       try { localStorage.setItem('ucronia-lector-letra', String(fs)); } catch { /* sin almacenamiento */ }
       layout(true);
       return;

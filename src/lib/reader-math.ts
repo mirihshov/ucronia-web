@@ -20,5 +20,5 @@ export const keepPosition = (i: number, oldSpreads: number, newSpreads: number) 
 
 export function pageLabel(i: number, g: Geometry): { first: number; last: number; text: string } {
   const first = i * g.n + 1, last = Math.min(g.cols, first + g.n - 1);
-  return { first, last, text: last > first ? `Páginas ${first}–${last} de ${g.cols}` : `Página ${first} de ${g.cols}` };
+  return { first, last, text: last > first ? `${first}–${last} / ${g.cols}` : `${first} / ${g.cols}` };
 }

@@ -48,11 +48,9 @@ const jsonLd = JSON.stringify(ld).replace(/</g, '\\u003c');
   {book.epub_key && (
     <dialog id="preview-dialog" class="reader" aria-label={`Vista previa de ${book.title}`} data-title={book.title} data-author={book.author} data-dl={`/descargar/${book.slug}`}>
       <div class="reader-bar">
-        <p class="reader-title"><small>Vista previa</small><b>{book.title}</b></p>
+        <p class="reader-title">{book.title}</p>
         <div class="reader-tools">
-          <button type="button" data-fs="-1" aria-label="Letra más pequeña">A<small>−</small></button>
-          <button type="button" data-fs="1" aria-label="Letra más grande">A<small>+</small></button>
-          <a class="reader-dl" href={`/descargar/${book.slug}`} rel="nofollow" data-astro-reload>Descargar EPUB ↓</a>
+          <button type="button" data-fs class="reader-aa" aria-label="Cambiar tamaño de letra" title="Tamaño de letra">A<small>a</small></button>
           <button type="button" data-preview-close aria-label="Cerrar vista previa">✕</button>
         </div>
       </div>
@@ -61,12 +59,11 @@ const jsonLd = JSON.stringify(ld).replace(/</g, '\\u003c');
           <div class="view" data-view tabindex="0" aria-label="Texto de la vista previa" lang={book.language}>
             <div class="pages" data-pages></div>
           </div>
-          <span class="folio folio-l" data-folio-l aria-hidden="true"></span><span class="folio folio-r" data-folio-r aria-hidden="true"></span>
         </div>
       </div>
       <div class="reader-foot">
         <button type="button" data-prev aria-label="Página anterior">‹</button>
-        <div class="reader-prog"><span data-label aria-live="polite"></span><i><b data-bar></b></i></div>
+        <span data-label aria-live="polite"></span>
         <button type="button" data-next aria-label="Página siguiente">›</button>
       </div>
     </dialog>
