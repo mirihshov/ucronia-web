@@ -46,7 +46,7 @@ const jsonLd = JSON.stringify(ld).replace(/</g, '\\u003c');
     </div>
   </article>
   {book.epub_key && (
-    <dialog id="preview-dialog" class="reader" aria-label={`Vista previa de ${book.title}`} data-title={book.title} data-author={book.author} data-dl={`/descargar/${book.slug}`}>
+    <dialog id="preview-dialog" class="reader" aria-label={`Vista previa de ${book.title}`} data-dl={`/descargar/${book.slug}`}>
       <div class="reader-bar">
         <p class="reader-title">{book.title}</p>
         <div class="reader-tools">

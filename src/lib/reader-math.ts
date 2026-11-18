@@ -1,6 +1,6 @@
 // Matemática de la paginación del lector (sin DOM: se prueba con tsx).
 // El texto se coloca en columnas CSS de la altura de la página; «avanzar» = desplazar el bloque de columnas.
-export const GAP_TWO = 80; // hueco central de un libro abierto (los dos márgenes interiores)
+export const GAP_TWO = 56; // hueco central de un libro abierto (los dos márgenes interiores)
 export const GAP_ONE = 40;
 export type Geometry = { n: 1 | 2; gap: number; step: number; cols: number; spreads: number };
 
