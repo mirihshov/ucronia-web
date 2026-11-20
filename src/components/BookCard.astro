@@ -14,6 +14,7 @@ const href = `/libro/${book.slug}`;
     <p>{[book.category?.name, book.year].filter(Boolean).join(' · ') || 'Sin categoría'}</p>
     <h3><a href={href}>{book.title}</a></h3>
     <b>{book.author}</b>
+    {book.tags.length > 0 && <ul class="book-tags" aria-label="Etiquetas">{book.tags.slice(0, 3).map((t) => <li><a href={`/catalogo?q=${encodeURIComponent(t)}`}>{t}</a></li>)}</ul>}
     <span class="more">Ver ficha <i>→</i></span>
   </div>
 </article>

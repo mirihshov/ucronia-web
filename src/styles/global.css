@@ -540,3 +540,40 @@ dialog.reader.closing .reader-bar,dialog.reader.closing .reader-foot{animation:r
   .book{padding:6px 24px;background:transparent;box-shadow:none}
   .reader-foot{height:auto;min-height:56px;padding-bottom:env(safe-area-inset-bottom)}
 }
+
+
+/* ── Buscador minimalista (sustituye a los estilos anteriores del buscador) ── */
+.search-box,.catalog-search{border-bottom:1px solid #ccc;box-shadow:none;transition:border-color .25s}
+.search-box:focus-within,.catalog-search:focus-within{border-color:#161616;box-shadow:none}
+.search-box::after{display:none}
+.search-box svg,.catalog-search svg{width:16px;color:#77736d}
+.search-box input,.catalog-search input{padding:14px 10px;font-size:13px}
+.search-box input::placeholder,.catalog-search input::placeholder{color:#a09c94}
+.search-box button:not(.clear){padding:8px 2px 8px 14px;color:#161616;background:none;font-size:10px;font-weight:600;letter-spacing:.1em}
+.search-box button:not(.clear)::after{content:" →"}
+@media (hover:hover){.search-box button:not(.clear):hover{background:none;text-decoration:underline;text-underline-offset:4px}}
+.search-box button.clear,.catalog-search button.clear{width:32px;height:32px;font-size:18px}
+.hint{display:none}
+.suggest{border:1px solid #e6e3da;box-shadow:0 14px 30px -12px rgba(0,0,0,.14);top:calc(100% + 6px)}
+.suggest li a{display:block;padding:11px 14px;border-bottom:1px solid #f0eee8}
+.suggest li:last-child a{border-bottom:0}
+.suggest .tx b{font-size:15px}
+.suggest .tx small{margin-top:2px;font-size:11px}
+.suggest .tx small.tg{color:#8a867f}
+.suggest li[aria-selected=true] a{background:#f7f6f1}
+.suggest .more-row,.suggest .empty-row{border-top:1px solid #e6e3da}
+.search-box .suggest .more-row button,.catalog-search .suggest .more-row button{padding:12px 14px;border:0;background:none;color:#161616;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+@media (hover:hover){.search-box .suggest .more-row button:hover,.catalog-search .suggest .more-row button:hover{background:#f7f6f1;text-decoration:none}}
+.suggest .empty-row{padding:14px;font-size:13px}
+@media(max-width:760px){
+  .search-box input,.catalog-search input{font-size:16px;padding:14px 10px}
+  .suggest li a{padding:12px 14px}
+  .search-box .suggest .more-row button,.catalog-search .suggest .more-row button{padding:15px 14px;font-size:11px}
+}
+
+/* ── Etiquetas en las tarjetas de libros ── */
+.book-tags{display:flex;flex-wrap:wrap;gap:2px 10px;margin:10px 0 0;padding:0;list-style:none;font-size:10px;line-height:1.4}
+.book-tags a{color:#77736d;border-bottom:1px solid transparent;transition:color .2s,border-color .2s}
+.book-tags a::before{content:"#";opacity:.55}
+@media (hover:hover){.book-tags a:hover{color:#161616;border-color:#161616}}
+@media(max-width:760px){.book-tags{margin-top:8px;font-size:11px}.book-tags li:nth-child(n+3){display:none}}

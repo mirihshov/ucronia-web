@@ -1,5 +1,5 @@
 // Buscador con sugerencias: combobox accesible, teclado, resaltado sin acentos. Mejora progresiva: sin JS el formulario sigue funcionando.
-type Hit = { slug: string; title: string; author: string; category: string | null; year: number | null; cover: string | null; mark: string };
+type Hit = { slug: string; title: string; author: string; category: string | null; year: number | null; tags?: string[] };
 type St = { ul: HTMLUListElement; status: HTMLElement; clear: HTMLButtonElement; hits: Hit[]; active: number; q: string; timer?: number; ctrl?: AbortController };
 const states = new WeakMap<HTMLFormElement, St>();
 let uid = 0;
@@ -19,9 +19,6 @@ function ensure(form: HTMLFormElement): St {
   clear.type = 'button'; clear.className = 'clear'; clear.textContent = '×'; clear.hidden = !input.value; clear.setAttribute('aria-label', 'Borrar búsqueda');
   input.after(clear);
   form.append(ul, status);
-  if (form.classList.contains('search-box') && matchMedia('(hover:hover)').matches) {
-    const k = document.createElement('kbd'); k.className = 'hint'; k.textContent = '/'; k.setAttribute('aria-hidden', 'true'); clear.after(k);
-  }
   input.setAttribute('role', 'combobox'); input.setAttribute('aria-autocomplete', 'list');
   input.setAttribute('aria-expanded', 'false'); input.setAttribute('aria-controls', id); input.autocomplete = 'off';
   const s: St = { ul, status, clear, hits: [], active: -1, q: '' };
@@ -73,18 +70,18 @@ function render(form: HTMLFormElement, s: St, q: string, d: { total: number; res
     const li = document.createElement('li');
     li.id = `${s.ul.id}-${i}`; li.setAttribute('role', 'option'); li.setAttribute('aria-selected', 'false');
     const a = document.createElement('a'); a.href = `/libro/${h.slug}`; a.tabIndex = -1;
-    const th = document.createElement('span'); th.className = 'th';
-    if (h.cover) { const img = new Image(); img.src = h.cover; img.alt = ''; img.loading = 'lazy'; th.append(img); } else th.textContent = h.mark;
     const tx = document.createElement('span'); tx.className = 'tx';
     const t = document.createElement('b'); t.append(...hl(h.title, words));
     const m = document.createElement('small'); m.append(...hl([h.author, h.category, h.year].filter(Boolean).join(' · '), words));
-    tx.append(t, m); a.append(th, tx); li.append(a); s.ul.append(li);
+    tx.append(t, m);
+    if (h.tags?.length) { const g = document.createElement('small'); g.className = 'tg'; g.append(...hl(h.tags.join(' · '), words)); tx.append(g); }
+    a.append(tx); li.append(a); s.ul.append(li);
   });
   const row = document.createElement('li'); row.setAttribute('role', 'presentation');
   if (d.results.length) {
     row.className = 'more-row';
     const b = document.createElement('button'); b.type = 'submit';
-    b.textContent = `Ver ${d.total === 1 ? 'el resultado' : `los ${d.total} resultados`} para «${q}» →`;
+    b.textContent = `Ver ${d.total === 1 ? 'el resultado' : `los ${d.total} resultados`} →`;
     row.append(b);
   } else {
     row.className = 'empty-row';

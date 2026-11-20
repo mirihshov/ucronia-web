@@ -60,6 +60,7 @@ const nav = [['Inicio', '/', 'inicio'], ['Biblioteca', '/catalogo', 'biblioteca'
       </div>
       <div class="progress" aria-hidden="true"></div>
     </header>
+    <Fragment set:html="<!--email_off-->" />
     <main><slot /></main>
     <footer class="site-footer">
       <div class="foot-wrap">
@@ -86,6 +87,7 @@ const nav = [['Inicio', '/', 'inicio'], ['Biblioteca', '/catalogo', 'biblioteca'
       </div>
       <div class="foot-bottom"><small>{[footer.note, year].filter(Boolean).join(' · ')}</small><a class="to-top" href="#top">Subir ↑</a></div>
     </footer>
+    <Fragment set:html="<!--/email_off-->" />
   </div>
   <script>import '../scripts/motion'; import '../scripts/search';</script>
 </body>
