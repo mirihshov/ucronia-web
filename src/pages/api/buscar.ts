@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { listBooks } from '../../lib/catalog';
+import { listBooks, coverUrl, markOf } from '../../lib/catalog';
 
 // Sugerencias del buscador: solo libros publicados (RLS) y datos públicos.
 const json = (d: unknown) =>
@@ -13,7 +13,7 @@ export const GET: APIRoute = async ({ url }) => {
     q, total,
     results: books.slice(0, 6).map((b) => ({
       slug: b.slug, title: b.title, author: b.author, category: b.category?.name ?? null,
-      year: b.year, tags: b.tags.slice(0, 3),
+      year: b.year, tags: b.tags.slice(0, 3), cover: coverUrl(b.cover_key), mark: markOf(b.title),
     })),
   });
 };

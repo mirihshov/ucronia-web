@@ -577,3 +577,8 @@ dialog.reader.closing .reader-bar,dialog.reader.closing .reader-foot{animation:r
 .book-tags a::before{content:"#";opacity:.55}
 @media (hover:hover){.book-tags a:hover{color:#161616;border-color:#161616}}
 @media(max-width:760px){.book-tags{margin-top:8px;font-size:11px}.book-tags li:nth-child(n+3){display:none}}
+
+/* ── Portada en las sugerencias del buscador (miniatura discreta) ── */
+.suggest li a{display:grid;grid-template-columns:34px 1fr;gap:12px;align-items:center}
+.suggest .th{display:grid;place-items:center;width:34px;height:50px;overflow:hidden;background:#161616;color:#fafafa;font-family:var(--serif);font-size:13px;box-shadow:none;outline:1px solid #e6e3da}
+.suggest .th img{width:100%;height:100%;object-fit:cover}

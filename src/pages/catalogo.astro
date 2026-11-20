@@ -17,7 +17,7 @@ const heading = q ? `Resultados para «${q}»` : catName ?? 'Biblioteca';
   <section class="catalog" id="biblioteca">
     <div class="catalog-head">
       <div><p class="kicker">Colección abierta</p><h2>{heading}</h2></div>
-      <p>{total} {total === 1 ? 'libro encontrado' : 'libros encontrados'}. Descarga gratuita en EPUB (y en PDF cuando está disponible).</p>
+      <p>{total} {total === 1 ? 'libro encontrado' : 'libros encontrados'}. Descarga gratuita en EPUB y PDF.</p>
     </div>
     <div class="filters" id="buscar">
       <form class="catalog-search" action="/catalogo" method="get" role="search" data-suggest>
