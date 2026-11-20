@@ -34,12 +34,13 @@ const jsonLd = JSON.stringify(ld).replace(/</g, '\\u003c');
         {book.year && <><dt>Año</dt><dd>{book.year}</dd></>}
         {book.category && <><dt>Género</dt><dd>{book.category.name}</dd></>}
         <dt>Idioma</dt><dd>{book.language}</dd>
-        {book.epub_key && <><dt>Formato</dt><dd>EPUB · {formatSize(book.epub_size)}</dd></>}
-        {book.tags.length > 0 && <><dt>Etiquetas</dt><dd>{book.tags.join(', ')}</dd></>}
+        {book.epub_key && <><dt>Formato</dt><dd>EPUB · {formatSize(book.epub_size)}{book.pdf_key && <> · PDF · {formatSize(book.pdf_size)}</>}</dd></>}
+        {book.tags.length > 0 && <><dt>Etiquetas</dt><dd class="tag-links">{book.tags.map((t) => <a href={`/catalogo?q=${encodeURIComponent(t)}`}>{t}</a>)}</dd></>}
       </dl>
       {book.epub_key && (
-        <div class="detail-actions">
-          <a class="more-button" href={`/descargar/${book.slug}`} rel="nofollow"><b>Descargar<em> EPUB</em></b> <span>↓</span></a>
+        <div class={`detail-actions${book.pdf_key ? ' has-pdf' : ''}`}>
+          <a class="more-button" href={`/descargar/${book.slug}`} rel="nofollow"><b><i class="dl">Descargar </i><em>EPUB</em></b> <span>↓</span></a>
+          {book.pdf_key && <a class="more-button ghost" href={`/descargar-pdf/${book.slug}`} rel="nofollow" aria-label="Descargar en PDF"><b><i class="dl">Descargar </i><em>PDF</em></b> <span>↓</span></a>}
           <button type="button" class="more-button ghost" data-preview data-url={`/vista-previa/${book.slug}`} aria-haspopup="dialog" aria-controls="preview-dialog">Vista previa <span>→</span></button>
         </div>
       )}

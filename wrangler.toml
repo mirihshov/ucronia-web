@@ -9,4 +9,5 @@ compatibility_flags = ["nodejs_compat"]
 PUBLIC_SUPABASE_URL = "https://fddfmngkwnyyvmlqzqzb.supabase.co"
 PUBLIC_SUPABASE_ANON_KEY = "sb_publishable_wuMN4yEnhh_tGjW29e1OJA_dgfWdLBq"
 MAX_EPUB_MB = "15"
+MAX_PDF_MB = "20"
 GITHUB_BACKUP_REPO = ""

@@ -5,6 +5,9 @@ import { putObject, removeObjects as removeFiles, sha256Hex, sniffImage } from '
 import { notifyBackup } from '../../../lib/backup';
 
 const MAX_COVER = 2 * 1024 * 1024;
+const MAX_PDF_LIMIT = 20; // MB: el bucket de Storage rechaza archivos mayores
+// Un PDF válido empieza por «%PDF-» (puede haber unos pocos bytes de basura antes, según la especificación).
+const isPdf = (b: Uint8Array) => new TextDecoder('latin1').decode(b.subarray(0, 1024)).includes('%PDF-');
 const go = (to: string, msg: string) =>
   new Response(null, { status: 303, headers: { Location: `${to}${to.includes('?') ? '&' : '?'}msg=${encodeURIComponent(msg)}` } });
 const isFile = (v: FormDataEntryValue | null): v is File => v instanceof File && v.size > 0;
@@ -23,13 +26,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const back = id ? `/admin/libros/${id}` : '/admin/libros/nuevo';
     const p = parseBookForm(f);
     if ('error' in p) return go(back, p.error);
-    const epub = f.get('epub'), cover = f.get('cover');
-    const hasEpub = isFile(epub), hasCover = isFile(cover);
+    const epub = f.get('epub'), cover = f.get('cover'), pdf = f.get('pdf');
+    const hasEpub = isFile(epub), hasCover = isFile(cover), hasPdf = isFile(pdf);
+    const dropPdf = f.get('remove_pdf') === '1' && !hasPdf;
     if (!id && !hasEpub) return go(back, 'Debes adjuntar un archivo EPUB.');
 
-    let old: { epub_key: string | null; cover_key: string | null } | null = null;
+    let old: { epub_key: string | null; cover_key: string | null; pdf_key: string | null } | null = null;
     if (id) {
-      const { data } = await db.from('books').select('epub_key,cover_key').eq('id', id).maybeSingle();
+      const { data } = await db.from('books').select('epub_key,cover_key,pdf_key').eq('id', id).maybeSingle();
       if (!data) return go('/admin', 'Libro no encontrado.');
       old = data;
     }
@@ -64,6 +68,18 @@ export const POST: APIRoute = async ({ request, locals }) => {
         uploaded.push(key);
         patch.cover_key = key;
       }
+      if (hasPdf) {
+        const max = Math.min(Number(env?.MAX_PDF_MB) || MAX_PDF_LIMIT, MAX_PDF_LIMIT) * 1048576;
+        if (pdf.size > max) { await removeFiles(db, uploaded); return go(back, `El PDF supera el límite de ${Math.round(max / 1048576)} MB.`); }
+        const buf = new Uint8Array(await pdf.arrayBuffer());
+        if (!isPdf(buf)) { await removeFiles(db, uploaded); return go(back, 'El archivo adjunto no es un PDF válido.'); }
+        const key = `pdf/${crypto.randomUUID()}.pdf`;
+        await putObject(db, key, buf, 'application/pdf');
+        uploaded.push(key);
+        Object.assign(patch, { pdf_key: key, pdf_size: buf.byteLength });
+      } else if (dropPdf) {
+        Object.assign(patch, { pdf_key: null, pdf_size: null });
+      }
     } catch {
       await removeFiles(db, uploaded);
       return go(back, 'Error al guardar en el almacenamiento. Inténtalo de nuevo.');
@@ -91,7 +107,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       if (!done) { await removeFiles(db, uploaded); return go(back, 'No se pudo generar un slug único.'); }
     }
     // Solo tras guardar con éxito se borran los archivos reemplazados.
-    if (old) await removeFiles(db, [hasEpub ? old.epub_key : null, hasCover ? old.cover_key : null]);
+    if (old) await removeFiles(db, [hasEpub ? old.epub_key : null, hasCover ? old.cover_key : null, hasPdf || dropPdf ? old.pdf_key : null]);
     notifyBackup(locals);
     return go(`/admin/libros/${savedId}`, id ? 'Cambios guardados.' : 'Libro creado como borrador. Ya puedes publicarlo.');
   }
@@ -114,11 +130,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
   }
 
   if (intent === 'delete') {
-    const { data } = await db.from('books').select('epub_key,cover_key').eq('id', id).maybeSingle();
+    const { data } = await db.from('books').select('epub_key,cover_key,pdf_key').eq('id', id).maybeSingle();
     const { error } = await db.from('books').delete().eq('id', id);
     if (error) return fail(error);
     notifyBackup(locals);
-    const clean = await removeFiles(db, [data?.epub_key, data?.cover_key]);
+    const clean = await removeFiles(db, [data?.epub_key, data?.cover_key, data?.pdf_key]);
     return go('/admin', clean ? 'Libro y archivos eliminados.' : 'Libro eliminado, pero no se pudieron borrar sus archivos del almacenamiento.');
   }
   return go('/admin', 'Acción no válida.');

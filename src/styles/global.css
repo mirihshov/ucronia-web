@@ -438,8 +438,10 @@ h1,h2,h3,.book-info h3,.detail-desc{overflow-wrap:anywhere;hyphens:auto}
 /* ---- Botones de la ficha: Descargar + Vista previa ---- */
 .detail-actions{display:flex;flex-wrap:wrap;gap:12px;align-items:stretch}
 .detail .detail-actions .more-button{position:static;margin:0;width:auto;flex:1 1 200px;max-width:300px;box-shadow:none}
-.more-button em{font-style:normal}
+.more-button em,.more-button i.dl{font-style:normal}
 .more-button b{font-weight:inherit}
+.tag-links a{display:inline-block;margin:0 10px 4px 0;border-bottom:1px solid #aaa69d;transition:border-color .2s,color .2s}
+.tag-links a:hover,.tag-links a:focus-visible{color:#161616;border-color:#161616}
 button.more-button{font-family:inherit;line-height:inherit;text-align:left;cursor:pointer;-webkit-appearance:none;appearance:none}
 .more-button.ghost{background:transparent;color:#161616}
 @media (hover:hover){.more-button.ghost:hover{background:#161616;color:#fff}}
@@ -449,6 +451,13 @@ button.more-button{font-family:inherit;line-height:inherit;text-align:left;curso
   .detail .detail-actions{position:sticky;bottom:calc(12px + env(safe-area-inset-bottom));z-index:5;flex-wrap:nowrap;gap:10px;background:#fafafa;box-shadow:0 0 0 8px #fafafa}
   .detail .detail-actions .more-button{flex:1 1 0;min-width:0;max-width:none;padding:16px 12px;font-size:11px;letter-spacing:.05em;justify-content:center;gap:8px}
   .more-button em{display:none}
+  /* con PDF hay tres botones en la barra fija: se muestran los formatos («EPUB», «PDF») y se compacta la vista previa */
+  .detail .detail-actions.has-pdf{gap:8px}
+  .detail .detail-actions.has-pdf .more-button{padding:16px 8px;font-size:10px;letter-spacing:.03em;gap:6px}
+  .detail .detail-actions.has-pdf .more-button i.dl{display:none}
+  .detail .detail-actions.has-pdf .more-button em{display:inline}
+  .detail .detail-actions.has-pdf button.more-button{flex-grow:1.4;text-align:center}
+  .detail .detail-actions.has-pdf button.more-button span{display:none}
 }
 @media(max-width:360px){.detail-actions .more-button span{display:none}}
 

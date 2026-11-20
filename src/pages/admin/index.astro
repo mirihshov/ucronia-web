@@ -2,7 +2,7 @@
 import Admin from '../../layouts/Admin.astro';
 const db = Astro.locals.admin!.client;
 const { data } = await db.from('books')
-  .select('id,title,author,published,featured,epub_key,category:categories(name)')
+  .select('id,title,author,published,featured,epub_key,pdf_key,category:categories(name)')
   .order('created_at', { ascending: false });
 const books = (data ?? []) as any[];
 const { data: sync } = await db.from('sync_log').select('*').eq('id', 1).maybeSingle();
@@ -32,13 +32,14 @@ const fmt = (d: string) => new Intl.DateTimeFormat('es', { dateStyle: 'medium', 
   </div>
   {books.length === 0 ? <p class="empty">Aún no hay libros. Crea el primero.</p> : (
     <table>
-      <thead><tr><th>Libro</th><th>Categoría</th><th>Estado</th><th>EPUB</th><th><span class="sr-only">Acciones</span></th></tr></thead>
+      <thead><tr><th>Libro</th><th>Categoría</th><th>Estado</th><th>EPUB</th><th>PDF</th><th><span class="sr-only">Acciones</span></th></tr></thead>
       <tbody>{books.map((b) => (
         <tr>
           <td class="main"><a href={`/admin/libros/${b.id}`}><strong>{b.title}</strong></a><small>{b.author}</small></td>
           <td data-label="Categoría">{b.category?.name ?? '—'}</td>
           <td data-label="Estado"><span class="tags"><span class={`tag ${b.published ? 'on' : ''}`}>{b.published ? 'Publicado' : 'Borrador'}</span>{b.featured && <span class="tag">Destacado</span>}</span></td>
           <td data-label="EPUB"><span class={`tag ${b.epub_key ? '' : 'warn'}`}>{b.epub_key ? 'Sí' : 'No'}</span></td>
+          <td data-label="PDF"><span class={`tag ${b.pdf_key ? 'on' : ''}`}>{b.pdf_key ? 'Sí' : '—'}</span></td>
           <td class="act">
             <div class="acts">
               <form method="post" action="/api/admin/books">

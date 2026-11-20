@@ -44,6 +44,12 @@ const { data: cats } = await db.from('categories').select('id,name').order('posi
         <input type="hidden" name="epub_sha256" value="" />
       </label>
       {!isNew && <p class="note" style="margin:0">{book.epub_key ? `EPUB actual: ${formatSize(book.epub_size)}` : 'Sin EPUB: no se puede publicar.'}</p>}
+      <label>Archivo PDF (opcional, máx. 20 MB) {!isNew && book.pdf_key ? '— reemplaza el actual' : ''}
+        <input type="file" name="pdf" accept=".pdf,application/pdf" />
+      </label>
+      {!isNew && (book.pdf_key
+        ? <label class="check"><input type="checkbox" name="remove_pdf" value="1" /> Quitar el PDF actual ({formatSize(book.pdf_size)}); el libro seguirá disponible en EPUB</label>
+        : <p class="note" style="margin:0">Sin PDF: en la ficha pública solo aparecerá la descarga en EPUB.</p>)}
       <label>Portada (JPG, PNG o WebP, máx. 2 MB)
         <input type="file" name="cover" accept="image/jpeg,image/png,image/webp" />
       </label>

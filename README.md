@@ -26,6 +26,10 @@ Astro (SSR) + Cloudflare Pages (solo la web) + Supabase (base de datos, autentic
   - Permisos (RLS en `storage.objects`): escribir, reemplazar y borrar solo si `is_admin()`; leer, `anon` solo `covers/`, `hero/` y los EPUB cuyo libro está publicado. Si despublicas un libro, su EPUB deja de ser legible.
   - Si ya tenías archivos en R2: `npm run migrar:r2` (opcional, ver DEPLOY.md). Las claves no cambian, así que la base de datos tampoco.
   - Límite configurable: `MAX_EPUB_MB` en `wrangler.toml`. Pruebas: `npm run test:epub`.
+- [x] Fase 7: PDF opcional por libro y búsqueda reparada
+  - Ejecuta `supabase/migrations/0007_pdf_y_busqueda.sql` (columnas `pdf_key`/`pdf_size`, el bucket acepta PDF y la política de lectura pública incluye los PDF de libros publicados).
+  - En el panel, cada libro puede llevar un PDF opcional (máx. 20 MB, `MAX_PDF_MB`); solo los libros con PDF muestran «Descargar PDF» (`/descargar-pdf/[slug]`) y el enlace PDF en OPDS.
+  - La búsqueda filtra en la web (sin depender de `search_text`): título, autor, editorial, etiquetas y categoría, sin acentos ni mayúsculas, ordenada por relevancia. Las etiquetas de la ficha enlazan a su búsqueda. Pruebas: `npm run test:search`.
 - [x] Fase 4: respaldo en GitHub (repo aparte `folio-backup`; ver su README)
   - Ejecuta `supabase/migrations/0004_sync_log.sql`.
   - `wrangler.toml`: pon `GITHUB_BACKUP_REPO = "usuario/folio-backup"`. Secreto: `npx wrangler pages secret put GITHUB_DISPATCH_TOKEN` (local: `.dev.vars`).

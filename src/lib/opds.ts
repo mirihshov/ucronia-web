@@ -21,6 +21,7 @@ export function bookEntry(b: Book, origin: string) {
   const cover = coverUrl(b.cover_key);
   const links: Link[] = [
     { rel: 'http://opds-spec.org/acquisition/open-access', href: `/descargar/${b.slug}`, type: 'application/epub+zip', title: 'EPUB', length: b.epub_size ?? undefined },
+    ...(b.pdf_key ? [{ rel: 'http://opds-spec.org/acquisition/open-access', href: `/descargar-pdf/${b.slug}`, type: 'application/pdf', title: 'PDF', length: b.pdf_size ?? undefined }] : []),
     ...(cover ? [{ rel: 'http://opds-spec.org/image', href: cover, type: mime(cover) }, { rel: 'http://opds-spec.org/image/thumbnail', href: cover, type: mime(cover) }] : []),
     { rel: 'alternate', href: `/libro/${b.slug}`, type: 'text/html', title: 'Ficha en la web' },
   ];
