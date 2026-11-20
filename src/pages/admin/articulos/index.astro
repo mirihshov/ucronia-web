@@ -3,7 +3,7 @@ import Admin from '../../../layouts/Admin.astro';
 import { formatDate } from '../../../lib/articles';
 const db = Astro.locals.admin!.client;
 const { data, error } = await db.from('articles')
-  .select('id,slug,title,kicker,published,published_at')
+  .select('id,slug,title,kicker,published,published_at,cover_key')
   .order('published_at', { ascending: false }).order('created_at', { ascending: false });
 const articles = (data ?? []) as any[];
 const pub = articles.filter((a) => a.published).length;
@@ -22,13 +22,14 @@ const pub = articles.filter((a) => a.published).length;
   <p class="note" style="margin:0 0 18px">Los artículos publicados aparecen en la portada (sección negra, de dos en dos y rotando) y en <a href="/articulos" target="_blank" rel="noopener"><u>/articulos</u></a>.</p>
   {articles.length === 0 ? <p class="empty">Aún no hay artículos. Crea el primero.</p> : (
     <table>
-      <thead><tr><th>Artículo</th><th>Sección</th><th>Fecha</th><th>Estado</th><th><span class="sr-only">Acciones</span></th></tr></thead>
+      <thead><tr><th>Artículo</th><th>Sección</th><th>Fecha</th><th>Estado</th><th>Portada</th><th><span class="sr-only">Acciones</span></th></tr></thead>
       <tbody>{articles.map((a) => (
         <tr>
           <td class="main"><a href={`/admin/articulos/${a.id}`}><strong>{a.title}</strong></a>{a.published && <small><a href={`/articulo/${a.slug}`} target="_blank" rel="noopener"><u>Ver en el sitio ↗</u></a></small>}</td>
           <td data-label="Sección">{a.kicker ?? '—'}</td>
           <td data-label="Fecha">{formatDate(a.published_at)}</td>
           <td data-label="Estado"><span class="tags"><span class={`tag ${a.published ? 'on' : ''}`}>{a.published ? 'Publicado' : 'Borrador'}</span></span></td>
+          <td data-label="Portada"><span class={`tag ${a.cover_key ? 'on' : ''}`}>{a.cover_key ? 'Sí' : '—'}</span></td>
           <td class="act">
             <div class="acts">
               <form method="post" action="/api/admin/articles">

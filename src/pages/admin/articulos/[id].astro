@@ -1,5 +1,6 @@
 ---
 import Admin from '../../../layouts/Admin.astro';
+import { coverUrl } from '../../../lib/catalog';
 const db = Astro.locals.admin!.client;
 const id = Astro.params.id!;
 const isNew = id === 'nuevo';
@@ -14,7 +15,7 @@ if (!isNew) {
   <div class="adm-title"><div><p class="kicker"><a href="/admin/articulos">← Artículos</a></p><h1>{isNew ? 'Nuevo artículo' : 'Editar artículo'}</h1></div>
     {!isNew && a.published && <a class="btn-s" href={`/articulo/${a.slug}`} target="_blank" rel="noopener">Ver en el sitio ↗</a>}
   </div>
-  <form method="post" action="/api/admin/articles" class="stack">
+  <form method="post" action="/api/admin/articles" class="stack" enctype="multipart/form-data">
     <input type="hidden" name="intent" value="save" />
     {!isNew && <input type="hidden" name="id" value={a.id} />}
     <fieldset>
@@ -36,6 +37,16 @@ if (!isNew) {
         <textarea name="excerpt" rows="3" maxlength="500">{a.excerpt ?? ''}</textarea>
         <span class="note">Si lo dejas vacío, la portada usa el inicio del texto.</span>
       </label>
+    </fieldset>
+    <fieldset>
+      <legend>Portada</legend>
+      <label>Imagen de portada (JPG, PNG o WebP, máx. 3 MB) {!isNew && a.cover_key ? '— reemplaza la actual' : '(opcional)'}
+        <input type="file" name="cover" accept="image/jpeg,image/png,image/webp" />
+      </label>
+      {a.cover_key && <img class="thumb photo" src={coverUrl(a.cover_key)!} alt="Portada actual" />}
+      {a.cover_key && <label class="check"><input type="checkbox" name="remove_cover" value="1" /> Quitar la portada actual</label>}
+      <label>Pie de foto o crédito (opcional)<input name="cover_caption" maxlength="200" value={a.cover_caption ?? ''} placeholder="Ilustración: …" /></label>
+      <p class="note" style="margin:0">Se muestra en la portada del sitio, en el listado y arriba del artículo (en blanco y negro; a color al pasar el ratón). Mejor horizontal, de al menos 1200 px de ancho.</p>
     </fieldset>
     <fieldset>
       <legend>Texto</legend>

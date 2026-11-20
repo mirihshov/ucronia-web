@@ -3,7 +3,7 @@
 Tiempo estimado: 30–40 min. Todo es gratuito (límites al final).
 
 ## 1. Supabase (si aún no lo hiciste)
-1. SQL Editor → ejecuta **en orden** el contenido de `supabase/migrations/`: `0001`, `0002`, `0003`, `0004`, `0005`, `0005b`, **`0006_storage.sql`** (crea el bucket privado y sus políticas) y **`0007_pdf_y_busqueda.sql`** (PDF opcional por libro) y **`0008_articulos.sql`** (artículos). Ejecuta las migraciones antes de desplegar el código nuevo. **Ejecuta la 0007 antes de desplegar el código nuevo**: la web ya lee las columnas `pdf_key` y `pdf_size`.
+1. SQL Editor → ejecuta **en orden** el contenido de `supabase/migrations/`: `0001`, `0002`, `0003`, `0004`, `0005`, `0005b`, **`0006_storage.sql`** (crea el bucket privado y sus políticas) y **`0007_pdf_y_busqueda.sql`** (PDF opcional por libro) **`0008_articulos.sql`** (artículos) y **`0009_articulos_portada.sql`** (portada de los artículos). Ejecuta las migraciones antes de desplegar el código nuevo. **Ejecuta la 0007 antes de desplegar el código nuevo**: la web ya lee las columnas `pdf_key` y `pdf_size`.
 2. Authentication → Users → *Add user* (correo + contraseña, «auto confirm»). Luego, en el SQL Editor:
    `insert into admins (user_id) select id from auth.users where email = 'tu@correo';`
 3. Authentication → Sign In / Providers → desactiva **Allow new users to sign up**.

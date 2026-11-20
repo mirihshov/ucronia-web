@@ -26,6 +26,10 @@ Astro (SSR) + Cloudflare Pages (solo la web) + Supabase (base de datos, autentic
   - Permisos (RLS en `storage.objects`): escribir, reemplazar y borrar solo si `is_admin()`; leer, `anon` solo `covers/`, `hero/` y los EPUB cuyo libro está publicado. Si despublicas un libro, su EPUB deja de ser legible.
   - Si ya tenías archivos en R2: `npm run migrar:r2` (opcional, ver DEPLOY.md). Las claves no cambian, así que la base de datos tampoco.
   - Límite configurable: `MAX_EPUB_MB` en `wrangler.toml`. Pruebas: `npm run test:epub`.
+- [x] Fase 9: destacados interactivos y portada en los artículos
+  - Ejecuta `supabase/migrations/0009_articulos_portada.sql` (después de la 0008).
+  - «Selección destacada»: hasta 6 títulos; la lista elige cuál se muestra en grande (ratón: pasar por encima; táctil: tocar; segundo clic abre la ficha). Rota sola con barra de avance, portada con inclinación 3D, flechas, deslizar con el dedo y teclado (flechas, Inicio, Fin). En móvil la lista es una tira de portadas.
+  - Artículos: Admin → Artículos → «Portada» (JPG/PNG/WebP, 3 MB, con pie de foto opcional). Se ve en la portada del sitio, en `/articulos` y arriba del artículo, y se usa como imagen al compartir. Se muestra en blanco y negro y a color al pasar el ratón (ajustable en `.art-cover img`, `.art-figure img` y `.r-thumb` de `global.css`).
 - [x] Fase 8: artículos y portada editorial
   - Ejecuta `supabase/migrations/0008_articulos.sql` (tabla `articles` con RLS: público solo ve los publicados).
   - Admin → **Artículos**: título, subtítulo, sección, autoría, fuente/edición, fecha, resumen y cuerpo con formato sencillo (`##` títulos, `>` citas, `- ` listas, `**negrita**`, `*cursiva*`, `[texto](url)`). Todo el HTML se escapa.

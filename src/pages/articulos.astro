@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import { coverUrl } from '../lib/catalog';
 import { listArticles, excerptOf, formatDate, ARTICLES_PAGE } from '../lib/articles';
 const page = Math.max(1, Number(Astro.url.searchParams.get('p')) || 1);
 const { articles, total } = await listArticles({ limit: ARTICLES_PAGE, page, withBody: true });
@@ -17,7 +18,7 @@ const href = (p: number) => `/articulos?p=${p}`;
       <ol class="art-rows">
         {articles.map((a, i) => (
           <li data-reveal style={`--i:${i % 3}`}>
-            <a href={`/articulo/${a.slug}`}>
+            <a href={`/articulo/${a.slug}`} class={a.cover_key ? 'has-thumb' : ''}>
               <span class="r-date">{formatDate(a.published_at)}</span>
               <span class="r-main">
                 {a.kicker && <small>{a.kicker}</small>}
@@ -25,6 +26,7 @@ const href = (p: number) => `/articulos?p=${p}`;
                 {a.subtitle && <em>{a.subtitle}</em>}
                 <span class="r-ex">{excerptOf(a, 190)}</span>
               </span>
+              {a.cover_key && <img class="r-thumb" src={coverUrl(a.cover_key)!} alt="" loading="lazy" decoding="async" width="168" height="112" />}
               <span class="r-go" aria-hidden="true">→</span>
             </a>
           </li>

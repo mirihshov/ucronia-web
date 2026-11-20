@@ -1,5 +1,5 @@
 // Movimiento y comportamiento del sitio: revelado al hacer scroll, contadores, parallax, cabecera, menú móvil,
-// carrusel de titulares de la portada, vista previa rotativa de artículos y manifiesto (frase y principios ligados al scroll).
+// carrusel de titulares de la portada, destacados interactivos, vista previa rotativa de artículos y manifiesto (frase y principios ligados al scroll).
 const reduce = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 let bound = false, ready = false, ticking = false;
 
@@ -95,6 +95,116 @@ function setupHero() {
     if (!root.isConnected) { clearInterval(timer); return; }
     if (hover || focus || away || document.hidden) return;
     elapsed += STEP;
+    if (elapsed >= every) show(i + 1);
+  }, STEP);
+}
+
+/* ── Destacados interactivos: la lista elige el título que se muestra en grande ──
+   Pasar el ratón (o tocar) selecciona; un segundo clic abre la ficha. Rota sola, se inclina con el ratón, se desliza con el dedo
+   y funciona con teclado (flechas, Inicio, Fin). Sin JavaScript se ve el primero y todos los enlaces siguen funcionando. */
+function setupFeatured() {
+  const root = document.querySelector<HTMLElement>('[data-feat]');
+  if (!root || root.dataset.ready) return;
+  const panels = [...root.querySelectorAll<HTMLElement>('[data-feat-panel]')];
+  const tabs = [...root.querySelectorAll<HTMLAnchorElement>('[data-feat-tab]')];
+  const n = panels.length;
+  if (n < 2 || tabs.length !== n) return;
+  root.dataset.ready = '1';
+  const every = Number(root.dataset.interval) || 6500;
+  const stage = root.querySelector<HTMLElement>('[data-feat-stage]');
+  const list = root.querySelector<HTMLElement>('[data-feat-list]');
+  const cur = root.querySelector<HTMLElement>('[data-feat-cur]');
+  let i = 0, elapsed = 0, hover = false, focus = false, away = false, hoverTimer = 0;
+
+  list?.setAttribute('role', 'tablist');
+  tabs.forEach((t, k) => {
+    t.id = `feat-t${k}`; t.setAttribute('role', 'tab'); t.setAttribute('aria-controls', panels[k].id);
+    t.setAttribute('aria-selected', String(k === 0)); t.tabIndex = k === 0 ? 0 : -1;
+    t.parentElement?.setAttribute('role', 'presentation');
+    panels[k].setAttribute('role', 'tabpanel'); panels[k].setAttribute('aria-labelledby', t.id);
+  });
+
+  const coverOf = (k: number) => panels[k].querySelector<HTMLElement>('.feat-cover');
+  const resetTilt = (k: number) => {
+    const c = coverOf(k);
+    if (c) { c.classList.remove('live'); c.style.removeProperty('--rx'); c.style.removeProperty('--ry'); }
+  };
+
+  const show = (to: number, moveFocus = false) => {
+    const k = ((to % n) + n) % n;
+    if (k === i) return;
+    const prev = i;
+    root.style.setProperty('--dir', (k - prev + n) % n <= n / 2 ? '1' : '-1'); // de qué lado entra el nuevo
+    i = k; elapsed = 0;
+    panels.forEach((p, j) => { p.classList.toggle('on', j === i); p.classList.toggle('out', j === prev); });
+    tabs.forEach((t, j) => {
+      const on = j === i, li = t.parentElement;
+      li?.classList.toggle('is-active', on);
+      if (!on) li?.style.removeProperty('--fp');
+      t.setAttribute('aria-selected', String(on)); t.tabIndex = on ? 0 : -1;
+    });
+    resetTilt(prev);
+    if (cur) cur.textContent = String(i + 1).padStart(2, '0');
+    if (moveFocus) tabs[i].focus();
+    // En móvil la lista es una tira horizontal: se centra el seleccionado (sin mover la página).
+    if (list && list.scrollWidth > list.clientWidth + 2) {
+      const li = tabs[i].parentElement as HTMLElement;
+      list.scrollTo({ left: li.offsetLeft - (list.clientWidth - li.offsetWidth) / 2, behavior: reduce() ? 'auto' : 'smooth' });
+    }
+  };
+
+  tabs.forEach((t, k) => {
+    t.addEventListener('click', (e) => { if (k !== i) { e.preventDefault(); show(k); } }); // el ya seleccionado abre la ficha
+    t.addEventListener('pointerenter', (e) => {
+      if (e.pointerType !== 'mouse') return;
+      clearTimeout(hoverTimer); hoverTimer = window.setTimeout(() => show(k), 140);
+    });
+    t.addEventListener('pointerleave', () => clearTimeout(hoverTimer));
+    t.addEventListener('keydown', (e) => {
+      const to = e.key === 'ArrowDown' || e.key === 'ArrowRight' ? k + 1 : e.key === 'ArrowUp' || e.key === 'ArrowLeft' ? k - 1
+        : e.key === 'Home' ? 0 : e.key === 'End' ? n - 1 : null;
+      if (to === null) return;
+      e.preventDefault(); show(to, true);
+    });
+  });
+  root.querySelector('[data-feat-prev]')?.addEventListener('click', () => show(i - 1));
+  root.querySelector('[data-feat-next]')?.addEventListener('click', () => show(i + 1));
+
+  // Deslizar con el dedo sobre el título principal.
+  let x0 = 0, y0 = 0;
+  stage?.addEventListener('touchstart', (e) => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+  stage?.addEventListener('touchend', (e) => {
+    const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.4) show(i + (dx < 0 ? 1 : -1));
+  }, { passive: true });
+
+  // Inclinación 3D de la portada siguiendo al ratón (solo con puntero fino y sin «reducir movimiento»).
+  if (stage && !reduce() && matchMedia('(hover:hover) and (pointer:fine)').matches) {
+    stage.addEventListener('pointermove', (e) => {
+      if (e.pointerType !== 'mouse') return;
+      const c = coverOf(i); if (!c) return;
+      const r = c.getBoundingClientRect();
+      const px = Math.max(-1, Math.min(1, ((e.clientX - r.left) / r.width) * 2 - 1));
+      const py = Math.max(-1, Math.min(1, ((e.clientY - r.top) / r.height) * 2 - 1));
+      c.classList.add('live');
+      c.style.setProperty('--ry', `${(px * 7).toFixed(2)}deg`); c.style.setProperty('--rx', `${(-py * 7).toFixed(2)}deg`);
+    });
+    stage.addEventListener('pointerleave', () => resetTilt(i));
+  }
+
+  // Rotación automática: se detiene con el ratón encima, el foco, fuera de pantalla o pestaña oculta.
+  root.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') hover = true; });
+  root.addEventListener('pointerleave', () => { hover = false; });
+  root.addEventListener('focusin', () => { focus = true; });
+  root.addEventListener('focusout', () => { focus = false; });
+  if ('IntersectionObserver' in window) new IntersectionObserver((es) => { away = !es[0].isIntersecting; }, { threshold: 0.3 }).observe(root);
+  if (reduce()) return;
+  const STEP = 100;
+  const timer = setInterval(() => {
+    if (!root.isConnected) { clearInterval(timer); return; }
+    if (hover || focus || away || document.hidden) return;
+    elapsed += STEP;
+    tabs[i].parentElement?.style.setProperty('--fp', Math.min(1, elapsed / every).toFixed(3));
     if (elapsed >= every) show(i + 1);
   }, STEP);
 }
@@ -218,7 +328,7 @@ function bindOnce() {
 
 function init() {
   ready = true;
-  bindOnce(); closeMenu(); setupReveal(); setupCounters(); setupHero(); setupArticles(); onScroll();
+  bindOnce(); closeMenu(); setupReveal(); setupCounters(); setupHero(); setupFeatured(); setupArticles(); onScroll();
 }
 document.addEventListener('astro:page-load', init);
 setTimeout(() => { if (!ready) init(); });

@@ -8,7 +8,6 @@ import { site } from '../lib/site';
 const [{ books: featured }, { books: latest, total }, slides, categories, { articles }] = await Promise.all([
   listBooks({ featured: true, limit: 6 }), listBooks({ limit: 6 }), getSlides(), getCategories(), listArticles({ limit: 8, withBody: true }),
 ]);
-const [lead, ...rest] = featured;
 const coverOf = (b: any) => `book-cover cover-${coverVariant(b.id)}${coverUrl(b.cover_key) ? ' has-img' : ''}`;
 const words = (t: string) => t.split(' ');
 const many = slides.length > 1;
@@ -55,41 +54,55 @@ const INTERVAL = 7000; // ms que dura cada titular
     )}
   </section>
 
-  {lead && (
-    <section class="catalog featured" id="destacados">
+  {featured.length > 0 && (
+    <section class="catalog featured" id="destacados" data-feat data-interval="6500">
       <div class="catalog-head" data-reveal>
         <div><p class="kicker">Elegidos por los editores</p><h2>Selección destacada</h2></div>
         <a class="text-link" href="/catalogo">Ver todo el catálogo <span>→</span></a>
       </div>
-      <div class={`feat${rest.length ? '' : ' solo'}`}>
-        <article class="feat-lead" data-reveal>
-          <a class={coverOf(lead)} href={`/libro/${lead.slug}`} tabindex="-1" aria-hidden="true">
-            {coverUrl(lead.cover_key)
-              ? <img src={coverUrl(lead.cover_key)!} alt="" width="250" height="375" decoding="async" />
-              : <><span>{lead.language.toUpperCase()}</span><strong>{markOf(lead.title)}</strong><i>{lead.year ?? ''}</i></>}
-          </a>
-          <div class="feat-copy">
-            <p class="feat-eyebrow"><b>01</b>{[lead.category?.name, lead.year].filter(Boolean).join(' · ') || 'Destacado'}</p>
-            <h3><a href={`/libro/${lead.slug}`}>{lead.title}</a></h3>
-            <p class="feat-author">{lead.author}</p>
-            {lead.description && <p class="feat-desc">{lead.description}</p>}
-            {lead.tags.length > 0 && <ul class="book-tags" aria-label="Etiquetas">{lead.tags.slice(0, 4).map((t) => <li><a href={`/catalogo?q=${encodeURIComponent(t)}`}>{t}</a></li>)}</ul>}
-            <span class="feat-more">Ver ficha <i>→</i></span>
-          </div>
-        </article>
-        {rest.length > 0 && (
-          <ol class="feat-list" aria-label="Más títulos destacados">
-            {rest.map((b, i) => (
-              <li data-reveal style={`--i:${i}`}>
-                <a href={`/libro/${b.slug}`}>
-                  <span class="n" aria-hidden="true">{pad(i + 2)}</span>
+      <div class={`feat${featured.length > 1 ? '' : ' solo'}`}>
+        <div class="feat-stage" data-feat-stage>
+          {featured.map((b, i) => (
+            <article class={`feat-panel${i === 0 ? ' on' : ''}`} id={`feat-p${i}`} data-feat-panel>
+              <div class="feat-cover">
+                <a class={coverOf(b)} href={`/libro/${b.slug}`} tabindex="-1" aria-hidden="true">
+                  {coverUrl(b.cover_key)
+                    ? <img src={coverUrl(b.cover_key)!} alt="" width="250" height="375" decoding="async" loading={i === 0 ? undefined : 'lazy'} />
+                    : <><span>{b.language.toUpperCase()}</span><strong>{markOf(b.title)}</strong><i>{b.year ?? ''}</i></>}
+                </a>
+              </div>
+              <div class="feat-copy">
+                <p class="feat-eyebrow" style="--k:0"><b>{pad(i + 1)}</b>{[b.category?.name, b.year].filter(Boolean).join(' · ') || 'Destacado'}</p>
+                <h3 style="--k:1"><a href={`/libro/${b.slug}`}>{b.title}</a></h3>
+                <p class="feat-author" style="--k:2">{b.author}</p>
+                {b.description && <p class="feat-desc" style="--k:3">{b.description}</p>}
+                {b.tags.length > 0 && <ul class="book-tags" aria-label="Etiquetas" style="--k:4">{b.tags.slice(0, 4).map((t) => <li><a href={`/catalogo?q=${encodeURIComponent(t)}`}>{t}</a></li>)}</ul>}
+                <span class="feat-more" style="--k:5">Ver ficha <i>→</i></span>
+              </div>
+            </article>
+          ))}
+          {featured.length > 1 && (
+            <div class="feat-ctrl">
+              <p class="feat-count" aria-hidden="true"><b data-feat-cur>01</b> / {pad(featured.length)}</p>
+              <button type="button" class="feat-btn" data-feat-prev aria-label="Destacado anterior"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg></button>
+              <button type="button" class="feat-btn" data-feat-next aria-label="Destacado siguiente"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" /></svg></button>
+            </div>
+          )}
+        </div>
+        {featured.length > 1 && (
+          <ol class="feat-list" data-feat-list aria-label="Títulos destacados">
+            {featured.map((b, i) => (
+              <li class={i === 0 ? 'is-active' : ''}>
+                <a href={`/libro/${b.slug}`} data-feat-tab>
+                  <span class="n" aria-hidden="true">{pad(i + 1)}</span>
                   <span class={coverOf(b)} aria-hidden="true">
                     {coverUrl(b.cover_key)
-                      ? <img src={coverUrl(b.cover_key)!} alt="" loading="lazy" decoding="async" width="52" height="78" />
+                      ? <img src={coverUrl(b.cover_key)!} alt="" loading="lazy" decoding="async" width="48" height="72" />
                       : <strong>{markOf(b.title)}</strong>}
                   </span>
                   <span class="t"><b>{b.title}</b><small>{[b.author, b.category?.name].filter(Boolean).join(' · ')}</small></span>
                   <span class="go" aria-hidden="true">→</span>
+                  <i class="fbar" aria-hidden="true"></i>
                 </a>
               </li>
             ))}
@@ -113,7 +126,8 @@ const INTERVAL = 7000; // ms que dura cada titular
       <div class="art-track" data-art-track data-reveal>
         {articles.map((a, i) => (
           <article class="art-slide" role="group" aria-roledescription="diapositiva" aria-label={`${i + 1} de ${articles.length}`}>
-            <a class="art-card" href={`/articulo/${a.slug}`}>
+            <a class={`art-card${a.cover_key ? ' has-cover' : ''}`} href={`/articulo/${a.slug}`}>
+              {a.cover_key && <figure class="art-cover"><img src={coverUrl(a.cover_key)!} alt="" loading="lazy" decoding="async" width="640" height="360" /></figure>}
               <p class="art-meta"><span>{a.kicker ?? 'Artículo'}</span><span>{formatDate(a.published_at)}</span></p>
               <h3>{a.title}</h3>
               {a.subtitle && <p class="art-sub">{a.subtitle}</p>}

@@ -38,6 +38,7 @@ export function parseArticleForm(f: FormData) {
       author: text(f, 'author', 200) || null,
       source: text(f, 'source', 200) || null,
       excerpt: text(f, 'excerpt', 500) || null,
+      cover_caption: text(f, 'cover_caption', 200) || null,
       ...(d ? { published_at: d } : {}),
     },
   };

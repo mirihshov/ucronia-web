@@ -4,9 +4,10 @@ export { renderBody, excerptOf, readingMinutes, plainText } from './article-body
 export type Article = {
   id: string; slug: string; title: string; subtitle: string | null; kicker: string | null; author: string | null;
   source: string | null; excerpt: string | null; published_at: string; body: string;
+  cover_key: string | null; cover_caption: string | null;
 };
 
-const META = 'id,slug,title,subtitle,kicker,author,source,excerpt,published_at';
+const META = 'id,slug,title,subtitle,kicker,author,source,excerpt,published_at,cover_key,cover_caption';
 export const ARTICLES_PAGE = 24;
 
 export const formatDate = (d: string) =>

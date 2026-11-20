@@ -1,21 +1,24 @@
 ---
 import Base from '../../layouts/Base.astro';
 import { getArticle, listArticles, renderBody, excerptOf, readingMinutes, formatDate } from '../../lib/articles';
+import { coverUrl } from '../../lib/catalog';
 import { site } from '../../lib/site';
 const a = await getArticle(Astro.params.slug!);
 if (!a) return new Response('Artículo no encontrado', { status: 404 });
 const { articles: related } = await listArticles({ limit: 3, exclude: a.id, withBody: true });
 const html = renderBody(a.body);
+const cover = coverUrl(a.cover_key);
 const mins = readingMinutes(a.body);
 const desc = excerptOf(a, 160) || site.description;
 const ld = {
   '@context': 'https://schema.org', '@type': 'Article', headline: a.title, ...(a.subtitle ? { alternativeHeadline: a.subtitle } : {}),
   datePublished: a.published_at, inLanguage: 'es', ...(a.author ? { author: { '@type': 'Person', name: a.author } } : {}),
   publisher: { '@type': 'Organization', name: site.name }, url: Astro.url.href, description: desc,
+  ...(cover ? { image: new URL(cover, Astro.url.origin).href } : {}),
 };
 const jsonLd = JSON.stringify(ld).replace(/</g, '\\u003c');
 ---
-<Base title={a.title} description={desc} type="article" active="articulos">
+<Base title={a.title} description={desc} image={cover ?? undefined} type="article" active="articulos">
   <script type="application/ld+json" slot="head" set:html={jsonLd} />
   <article class="art">
     <header class="art-hero">
@@ -25,6 +28,12 @@ const jsonLd = JSON.stringify(ld).replace(/</g, '\\u003c');
       {a.source && <p class="art-source">{a.source}</p>}
       <p class="art-by">{[a.author, formatDate(a.published_at), `${mins} min de lectura`].filter(Boolean).join(' · ')}</p>
     </header>
+    {cover && (
+      <figure class="art-figure">
+        <img src={cover} alt={`Portada de ${a.title}`} fetchpriority="high" decoding="async" />
+        {a.cover_caption && <figcaption>{a.cover_caption}</figcaption>}
+      </figure>
+    )}
     <div class="art-body" lang="es" set:html={html} />
     <div class="art-end"><a href="/articulos">← Todos los artículos</a><a href="#top">Subir ↑</a></div>
   </article>
