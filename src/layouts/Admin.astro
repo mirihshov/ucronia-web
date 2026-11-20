@@ -12,6 +12,7 @@ const admin = Astro.locals.admin;
 const path = Astro.url.pathname;
 const nav = [
   ['Libros', '/admin', path === '/admin' || path.startsWith('/admin/libros')],
+  ['Artículos', '/admin/articulos', path.startsWith('/admin/articulos')],
   ['Portada', '/admin/portada', path.startsWith('/admin/portada')],
   ['Categorías', '/admin/categorias', path.startsWith('/admin/categorias')],
   ['Acerca de', '/admin/acerca', path.startsWith('/admin/acerca')],

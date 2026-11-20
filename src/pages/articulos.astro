@@ -1,0 +1,42 @@
+---
+import Base from '../layouts/Base.astro';
+import { listArticles, excerptOf, formatDate, ARTICLES_PAGE } from '../lib/articles';
+const page = Math.max(1, Number(Astro.url.searchParams.get('p')) || 1);
+const { articles, total } = await listArticles({ limit: ARTICLES_PAGE, page, withBody: true });
+const pages = Math.max(1, Math.ceil(total / ARTICLES_PAGE));
+const href = (p: number) => `/articulos?p=${p}`;
+---
+<Base title="Artículos" active="articulos" description="Ensayos, entrevistas y crónicas para leer en pantalla.">
+  {page > 1 && <meta slot="head" name="robots" content="noindex, follow" />}
+  <section class="catalog art-index" id="articulos">
+    <div class="catalog-head">
+      <div><p class="kicker">Lecturas</p><h2>Artículos</h2></div>
+      <p>{total} {total === 1 ? 'artículo publicado' : 'artículos publicados'}. Textos para leer con calma, sin registro.</p>
+    </div>
+    {articles.length ? (
+      <ol class="art-rows">
+        {articles.map((a, i) => (
+          <li data-reveal style={`--i:${i % 3}`}>
+            <a href={`/articulo/${a.slug}`}>
+              <span class="r-date">{formatDate(a.published_at)}</span>
+              <span class="r-main">
+                {a.kicker && <small>{a.kicker}</small>}
+                <b>{a.title}</b>
+                {a.subtitle && <em>{a.subtitle}</em>}
+                <span class="r-ex">{excerptOf(a, 190)}</span>
+              </span>
+              <span class="r-go" aria-hidden="true">→</span>
+            </a>
+          </li>
+        ))}
+      </ol>
+    ) : <div class="empty-state"><p>Sin artículos</p><h3>Pronto habrá lecturas nuevas.</h3><a href="/catalogo">Ir a la biblioteca</a></div>}
+    {pages > 1 && (
+      <div class="pager">
+        {page > 1 ? <a href={href(page - 1)}>← Anterior</a> : <span />}
+        <span>Página {page} de {pages}</span>
+        {page < pages ? <a href={href(page + 1)}>Siguiente →</a> : <span />}
+      </div>
+    )}
+  </section>
+</Base>

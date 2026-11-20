@@ -8,11 +8,14 @@ const mk = (i, o = {}) => ({ id: `b${i}`, slug: `libro-${i}`, title: `Libro de p
   epub_key: `epub/${i}.epub`, epub_size: 123456, featured: i < 3, published: true, created_at: `2026-01-0${i}`, updated_at: `2026-02-0${i}`,
   category_id: i % 2 ? 'c1' : 'c2', category: i % 2 ? cats[0] : cats[1], ...o });
 const books = [1, 2, 3, 4, 5, 6, 7].map((i) => mk(i));
+const arts = [1, 2, 3].map((i) => ({ id: `a${i}`, slug: `articulo-${i}`, title: `Artículo de prueba ${i}`, subtitle: `Subtítulo ${i}`, kicker: 'Conversación',
+  author: 'Autora Uno', source: `Revista ${i} / agosto 2026`, excerpt: null, published: true, published_at: `2026-08-0${i}`, created_at: `2026-08-0${i}`, updated_at: `2026-08-1${i}`,
+  body: `Primer párrafo del artículo ${i}.\n\n## Un título\n\nSegundo <b>párrafo</b> con [enlace](/catalogo) y [malo](javascript:alert(1)).` }));
 
 const mock = http.createServer((req, res) => {
   const u = new URL(req.url, 'http://x');
   const t = u.pathname.split('/').pop();
-  let rows = t === 'categories' ? cats : t === 'books' ? books : t === 'site_settings' ? [
+  let rows = t === 'categories' ? cats : t === 'books' ? books : t === 'articles' ? arts : t === 'site_settings' ? [
     ...(process.env.NO_HERO ? [] : [{ key: 'hero', value: { kicker: 'Kicker editado', title: 'Titular editado por admin', deck: 'Bajada editada', image: 'hero/abc-123.jpg', caption: '' } }]),
     ...(process.env.NO_ABOUT ? [] : [{ key: 'about', value: { title: 'Acerca editado', sections: [
       { id: 'sec-nueva', title: 'Sección escrita por admin', body: 'Primer párrafo con hola@ucronia.org y [mi enlace](/catalogo).\n\nSegundo [malo](javascript:alert(3)) párrafo.' },
@@ -68,6 +71,20 @@ const home = await (await get('/')).text();
 const noAuthors = !home.includes('Autores destacados') && !home.includes('class="ticker"') && !home.includes('Novedades</');
 console.log(noAuthors ? 'OK  ' : 'FAIL', 'sin autores ni cinta de novedades'); if (!noAuthors) bad++;
 await check('catálogo', '/catalogo', 200, 'Libro de prueba número 7', '7 libros encontrados', 'Novela');
+await check('portada: destacados editoriales', '/', 200, 'class="feat"', 'feat-lead', 'feat-list', 'Ver todo el catálogo');
+await check('portada: artículos rotativos', '/', 200, 'data-articles', 'data-art-track', 'art-slide', 'Artículo de prueba 1', 'Leer artículo', 'data-art-next');
+const homeHtml = await (await get('/')).text();
+const order = ['id="destacados"', 'id="articulos"', 'id="recientes"'].map((k) => homeHtml.indexOf(k));
+const okOrder = order.every((n, i) => n > -1 && (i === 0 || n > order[i - 1]));
+console.log(okOrder ? 'OK  ' : 'FAIL', 'orden: destacados → artículos → últimas incorporaciones'); if (!okOrder) bad++;
+await check('listado de artículos', '/articulos', 200, 'Artículo de prueba 2', '3 artículos publicados');
+await check('artículo: interior', '/articulo/articulo-2', 200, 'art-hero', 'Subtítulo 2', 'Revista 2 / agosto 2026', 'art-body', 'application/ld+json', '"@type":"Article"', 'href="/catalogo"', 'Artículos relacionados');
+const art = await (await get('/articulo/articulo-2')).text();
+const okArt = art.includes('&lt;b&gt;párrafo&lt;/b&gt;') && !art.includes('javascript:alert');
+console.log(okArt ? 'OK  ' : 'FAIL', 'artículo: HTML escapado y javascript: filtrado'); if (!okArt) bad++;
+await check('artículo inexistente', '/articulo/no-existe', 404);
+await check('admin artículos sin sesión', '/admin/articulos', 302);
+await check('API artículos sin sesión', '/api/admin/articles', 401);
 await check('búsqueda sin resultados', '/catalogo?q=zzz', 200, 'noindex');
 await check('ficha', '/libro/libro-3', 200, 'Descargar EPUB', 'application/ld+json', '"@type":"Book"', 'EPUB · 121 KB');
 await check('ficha inexistente', '/libro/no-existe', 404);
@@ -80,7 +97,7 @@ if (!process.env.NO_ABOUT) {
 } else await check('acerca por defecto', '/acerca', 200, 'Acerca del proyecto', 'id="proyecto"', 'id="criterios"', 'id="opds"', 'id="contacto"', 'id="legal"', 'href="mailto:contacto@ejemplo.org"', '/opds');
 await check('admin acerca sin sesión', '/admin/acerca', 302);
 await check('robots', '/robots.txt', 200, 'Disallow: /admin', 'Sitemap:');
-await check('sitemap', '/sitemap.xml', 200, '/libro/libro-1', '<lastmod>2026-02-01</lastmod>');
+await check('sitemap', '/sitemap.xml', 200, '/libro/libro-1', '<lastmod>2026-02-01</lastmod>', '/articulos', '/articulo/articulo-1');
 await check('admin sin sesión → login', '/admin', 302);
 await check('login visible', '/admin/login', 200, 'Acceso', 'Entrar', 'logo-completo.svg');
 await check('OPDS raíz', '/opds', 200, '<feed', 'kind=acquisition', 'rel="search"', '/opds/nuevos');

@@ -9,6 +9,7 @@
     "check": "astro check",
     "test:epub": "tsx scripts/test-epub.ts",
     "test:search": "tsx scripts/test-search.ts",
+    "test:articles": "tsx scripts/test-articles.ts",
     "test:smoke": "node scripts/smoke.mjs",
     "test:footer": "tsx scripts/test-footer.ts",
     "test:about": "tsx scripts/test-about.ts",

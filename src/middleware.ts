@@ -2,7 +2,7 @@ import { defineMiddleware } from 'astro:middleware';
 import { resolveAdmin } from './lib/auth';
 
 const CSP = "default-src 'self'; img-src 'self' data: https://images.unsplash.com; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'";
-const cacheable = (p: string) => p === '/' || p === '/catalogo' || p === '/acerca' || p === '/api/buscar' || p.startsWith('/opds') || p.startsWith('/libro/');
+const cacheable = (p: string) => p === '/' || p === '/catalogo' || p === '/acerca' || p === '/api/buscar' || p.startsWith('/opds') || p.startsWith('/libro/') || p === '/articulos' || p.startsWith('/articulo/');
 
 // Cabeceras de seguridad en todas las respuestas (CSP/HSTS solo en producción).
 function secure(res: Response, noStore = false) {

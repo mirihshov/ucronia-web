@@ -1,5 +1,5 @@
 // Movimiento y comportamiento del sitio: revelado al hacer scroll, contadores, parallax, cabecera, menú móvil,
-// carrusel de titulares de la portada y manifiesto (frase y principios ligados al scroll).
+// carrusel de titulares de la portada, vista previa rotativa de artículos y manifiesto (frase y principios ligados al scroll).
 const reduce = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 let bound = false, ready = false, ticking = false;
 
@@ -99,6 +99,69 @@ function setupHero() {
   }, STEP);
 }
 
+/* ── Artículos: vista previa de 2 en 2 (1 en móvil) que rota sola; flechas, dedo y teclado ── */
+function setupArticles() {
+  const root = document.querySelector<HTMLElement>('[data-articles]');
+  const track = root?.querySelector<HTMLElement>('[data-art-track]');
+  const slides = track ? [...track.querySelectorAll<HTMLElement>('.art-slide')] : [];
+  if (!root || !track || root.dataset.ready || slides.length < 2) return;
+  root.dataset.ready = '1';
+  const every = Number(root.dataset.interval) || 8000;
+  const cur = root.querySelector<HTMLElement>('[data-art-cur]'), bar = root.querySelector<HTMLElement>('[data-art-bar]');
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const per = () => Math.max(1, Math.round(track.clientWidth / Math.max(1, slides[0].offsetWidth)));
+  const last = () => Math.max(0, slides.length - per());
+  let i = 0, elapsed = 0, hover = false, focus = false, away = false, settle = 0;
+
+  const sync = () => {
+    const p = per();
+    root.classList.toggle('static', last() === 0);
+    if (cur) cur.textContent = p > 1 ? `${pad(i + 1)}–${pad(Math.min(slides.length, i + p))}` : pad(i + 1);
+    slides.forEach((e, k) => e.classList.toggle('on', k >= i && k < i + p));
+  };
+  const show = (to: number, smooth = true) => {
+    const m = last();
+    i = to > m ? 0 : to < 0 ? m : to; elapsed = 0;
+    track.scrollTo({ left: slides[i].offsetLeft - slides[0].offsetLeft, behavior: smooth && !reduce() ? 'smooth' : 'auto' });
+    sync();
+  };
+
+  root.querySelector('[data-art-prev]')?.addEventListener('click', () => show(i - 1));
+  root.querySelector('[data-art-next]')?.addEventListener('click', () => show(i + 1));
+  root.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') { show(i - 1); e.preventDefault(); }
+    else if (e.key === 'ArrowRight') { show(i + 1); e.preventDefault(); }
+  });
+  // Al deslizar con el dedo (o la rueda) el carrusel se ajusta solo: se lee dónde quedó cuando termina de moverse.
+  track.addEventListener('scroll', () => {
+    clearTimeout(settle);
+    settle = window.setTimeout(() => {
+      const w = slides[1].offsetLeft - slides[0].offsetLeft || slides[0].offsetWidth;
+      const k = Math.min(last(), Math.max(0, Math.round(track.scrollLeft / Math.max(1, w))));
+      if (k !== i) { i = k; sync(); }
+      elapsed = 0;
+    }, 120);
+  }, { passive: true });
+  addEventListener('resize', () => show(Math.min(i, last()), false), { passive: true });
+
+  // Rotación automática de una en una (con envoltura): se detiene con el ratón encima, el foco, fuera de pantalla o pestaña oculta.
+  root.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') hover = true; });
+  root.addEventListener('pointerleave', () => { hover = false; });
+  root.addEventListener('focusin', () => { focus = true; });
+  root.addEventListener('focusout', () => { focus = false; });
+  if ('IntersectionObserver' in window) new IntersectionObserver((es) => { away = !es[0].isIntersecting; }, { threshold: 0.3 }).observe(root);
+  sync();
+  if (reduce()) return; // con «reducir movimiento» solo cambia con las flechas o el dedo
+  const STEP = 100;
+  const timer = setInterval(() => {
+    if (!root.isConnected) { clearInterval(timer); return; }
+    if (last() === 0 || hover || focus || away || document.hidden) return;
+    elapsed += STEP;
+    bar?.style.setProperty('--ap', Math.min(1, elapsed / every).toFixed(3));
+    if (elapsed >= every) { show(i + 1); bar?.style.setProperty('--ap', '0'); }
+  }, STEP);
+}
+
 /* ── Manifiesto: frase que se ilumina, principio activo y marca de agua con parallax ── */
 function updateManifesto() {
   const m = document.querySelector<HTMLElement>('.manifesto');
@@ -155,7 +218,7 @@ function bindOnce() {
 
 function init() {
   ready = true;
-  bindOnce(); closeMenu(); setupReveal(); setupCounters(); setupHero(); onScroll();
+  bindOnce(); closeMenu(); setupReveal(); setupCounters(); setupHero(); setupArticles(); onScroll();
 }
 document.addEventListener('astro:page-load', init);
 setTimeout(() => { if (!ready) init(); });

@@ -1,0 +1,52 @@
+---
+import Admin from '../../../layouts/Admin.astro';
+const db = Astro.locals.admin!.client;
+const id = Astro.params.id!;
+const isNew = id === 'nuevo';
+let a: any = { published_at: new Date().toISOString().slice(0, 10), body: '' };
+if (!isNew) {
+  const { data } = await db.from('articles').select('*').eq('id', id).maybeSingle();
+  if (!data) return Astro.redirect('/admin/articulos?msg=' + encodeURIComponent('Artículo no encontrado.'));
+  a = data;
+}
+---
+<Admin title={isNew ? 'Nuevo artículo' : 'Editar artículo'}>
+  <div class="adm-title"><div><p class="kicker"><a href="/admin/articulos">← Artículos</a></p><h1>{isNew ? 'Nuevo artículo' : 'Editar artículo'}</h1></div>
+    {!isNew && a.published && <a class="btn-s" href={`/articulo/${a.slug}`} target="_blank" rel="noopener">Ver en el sitio ↗</a>}
+  </div>
+  <form method="post" action="/api/admin/articles" class="stack">
+    <input type="hidden" name="intent" value="save" />
+    {!isNew && <input type="hidden" name="id" value={a.id} />}
+    <fieldset>
+      <legend>Cabecera</legend>
+      <label>Título<input name="title" required maxlength="300" value={a.title ?? ''} /></label>
+      <label>Subtítulo (opcional)<input name="subtitle" maxlength="300" value={a.subtitle ?? ''} placeholder="Entrevista a…" /></label>
+      <div class="row2">
+        <label>Sección o tipo
+          <input name="kicker" maxlength="60" list="kickers" value={a.kicker ?? ''} placeholder="Conversación" />
+          <datalist id="kickers"><option value="Conversación"></option><option value="Ensayo"></option><option value="Crónica"></option><option value="Entrevista"></option><option value="Reseña"></option><option value="Documento"></option><option value="Opinión"></option></datalist>
+        </label>
+        <label>Fecha de publicación<input type="date" name="published_at" value={a.published_at} /></label>
+      </div>
+      <div class="row2">
+        <label>Autoría (opcional)<input name="author" maxlength="200" value={a.author ?? ''} /></label>
+        <label>Fuente o edición (opcional)<input name="source" maxlength="200" value={a.source ?? ''} placeholder="Nueva Sociedad 323 / agosto 2026" /></label>
+      </div>
+      <label>Resumen para la vista previa (opcional)
+        <textarea name="excerpt" rows="3" maxlength="500">{a.excerpt ?? ''}</textarea>
+        <span class="note">Si lo dejas vacío, la portada usa el inicio del texto.</span>
+      </label>
+    </fieldset>
+    <fieldset>
+      <legend>Texto</legend>
+      <label>Cuerpo del artículo
+        <textarea name="body" rows="24" required maxlength="120000" style="font-family:Georgia,serif;font-size:17px;line-height:1.6">{a.body}</textarea>
+      </label>
+      <p class="note" style="margin:0">
+        Separa los párrafos con una línea en blanco. El primero se muestra más grande, como entradilla.<br />
+        <code>## Título</code> · <code>### Subtítulo</code> · <code>&gt; cita</code> · <code>- elemento de lista</code> · <code>---</code> separador · <code>**negrita**</code> · <code>*cursiva*</code> · <code>[texto](https://enlace)</code>
+      </p>
+    </fieldset>
+    <div class="form-actions"><button class="primary">Guardar</button><a class="btn-s" href="/admin/articulos">Cancelar</a></div>
+  </form>
+</Admin>

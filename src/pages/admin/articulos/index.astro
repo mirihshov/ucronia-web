@@ -1,0 +1,48 @@
+---
+import Admin from '../../../layouts/Admin.astro';
+import { formatDate } from '../../../lib/articles';
+const db = Astro.locals.admin!.client;
+const { data, error } = await db.from('articles')
+  .select('id,slug,title,kicker,published,published_at')
+  .order('published_at', { ascending: false }).order('created_at', { ascending: false });
+const articles = (data ?? []) as any[];
+const pub = articles.filter((a) => a.published).length;
+---
+<Admin title="Artículos">
+  <div class="adm-title">
+    <div><p class="kicker">Lecturas</p><h1>Artículos</h1></div>
+    <a class="btn-s primary" href="/admin/articulos/nuevo">+ Nuevo artículo</a>
+  </div>
+  {error && <p class="msg">No se pudieron leer los artículos ({error.message}). ¿Ejecutaste la migración <b>0008_articulos.sql</b> en Supabase?</p>}
+  <div class="stats" role="group" aria-label="Resumen de artículos">
+    <div><b>{articles.length}</b><span>Total</span></div>
+    <div><b>{pub}</b><span>Publicados</span></div>
+    <div><b>{articles.length - pub}</b><span>Borradores</span></div>
+  </div>
+  <p class="note" style="margin:0 0 18px">Los artículos publicados aparecen en la portada (sección negra, de dos en dos y rotando) y en <a href="/articulos" target="_blank" rel="noopener"><u>/articulos</u></a>.</p>
+  {articles.length === 0 ? <p class="empty">Aún no hay artículos. Crea el primero.</p> : (
+    <table>
+      <thead><tr><th>Artículo</th><th>Sección</th><th>Fecha</th><th>Estado</th><th><span class="sr-only">Acciones</span></th></tr></thead>
+      <tbody>{articles.map((a) => (
+        <tr>
+          <td class="main"><a href={`/admin/articulos/${a.id}`}><strong>{a.title}</strong></a>{a.published && <small><a href={`/articulo/${a.slug}`} target="_blank" rel="noopener"><u>Ver en el sitio ↗</u></a></small>}</td>
+          <td data-label="Sección">{a.kicker ?? '—'}</td>
+          <td data-label="Fecha">{formatDate(a.published_at)}</td>
+          <td data-label="Estado"><span class="tags"><span class={`tag ${a.published ? 'on' : ''}`}>{a.published ? 'Publicado' : 'Borrador'}</span></span></td>
+          <td class="act">
+            <div class="acts">
+              <form method="post" action="/api/admin/articles">
+                <input type="hidden" name="id" value={a.id} />
+                <button name="intent" value={a.published ? 'unpublish' : 'publish'}>{a.published ? 'Despublicar' : 'Publicar'}</button>
+              </form>
+              <form method="post" action="/api/admin/articles" onsubmit="return confirm('¿Eliminar definitivamente este artículo?')">
+                <input type="hidden" name="id" value={a.id} />
+                <button class="danger" name="intent" value="delete">Eliminar</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+      ))}</tbody>
+    </table>
+  )}
+</Admin>

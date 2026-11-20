@@ -1,12 +1,15 @@
 ---
 import Base from '../layouts/Base.astro';
 import BookCard from '../components/BookCard.astro';
-import { listBooks, getCategories } from '../lib/catalog';
+import { listBooks, getCategories, coverUrl, coverVariant, markOf } from '../lib/catalog';
+import { listArticles, excerptOf, readingMinutes, formatDate } from '../lib/articles';
 import { getSlides } from '../lib/settings';
 import { site } from '../lib/site';
-const [{ books: featured }, { books: latest, total }, slides, categories] = await Promise.all([
-  listBooks({ featured: true, limit: 6 }), listBooks({ limit: 6 }), getSlides(), getCategories(),
+const [{ books: featured }, { books: latest, total }, slides, categories, { articles }] = await Promise.all([
+  listBooks({ featured: true, limit: 6 }), listBooks({ limit: 6 }), getSlides(), getCategories(), listArticles({ limit: 8, withBody: true }),
 ]);
+const [lead, ...rest] = featured;
+const coverOf = (b: any) => `book-cover cover-${coverVariant(b.id)}${coverUrl(b.cover_key) ? ' has-img' : ''}`;
 const words = (t: string) => t.split(' ');
 const many = slides.length > 1;
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -52,12 +55,76 @@ const INTERVAL = 7000; // ms que dura cada titular
     )}
   </section>
 
-  {featured.length > 0 && (
-    <section class="catalog" id="destacados">
+  {lead && (
+    <section class="catalog featured" id="destacados">
       <div class="catalog-head" data-reveal>
         <div><p class="kicker">Elegidos por los editores</p><h2>Selección destacada</h2></div>
+        <a class="text-link" href="/catalogo">Ver todo el catálogo <span>→</span></a>
       </div>
-      <div class="books-grid">{featured.map((b, i) => <BookCard book={b} i={i} />)}</div>
+      <div class={`feat${rest.length ? '' : ' solo'}`}>
+        <article class="feat-lead" data-reveal>
+          <a class={coverOf(lead)} href={`/libro/${lead.slug}`} tabindex="-1" aria-hidden="true">
+            {coverUrl(lead.cover_key)
+              ? <img src={coverUrl(lead.cover_key)!} alt="" width="250" height="375" decoding="async" />
+              : <><span>{lead.language.toUpperCase()}</span><strong>{markOf(lead.title)}</strong><i>{lead.year ?? ''}</i></>}
+          </a>
+          <div class="feat-copy">
+            <p class="feat-eyebrow"><b>01</b>{[lead.category?.name, lead.year].filter(Boolean).join(' · ') || 'Destacado'}</p>
+            <h3><a href={`/libro/${lead.slug}`}>{lead.title}</a></h3>
+            <p class="feat-author">{lead.author}</p>
+            {lead.description && <p class="feat-desc">{lead.description}</p>}
+            {lead.tags.length > 0 && <ul class="book-tags" aria-label="Etiquetas">{lead.tags.slice(0, 4).map((t) => <li><a href={`/catalogo?q=${encodeURIComponent(t)}`}>{t}</a></li>)}</ul>}
+            <span class="feat-more">Ver ficha <i>→</i></span>
+          </div>
+        </article>
+        {rest.length > 0 && (
+          <ol class="feat-list" aria-label="Más títulos destacados">
+            {rest.map((b, i) => (
+              <li data-reveal style={`--i:${i}`}>
+                <a href={`/libro/${b.slug}`}>
+                  <span class="n" aria-hidden="true">{pad(i + 2)}</span>
+                  <span class={coverOf(b)} aria-hidden="true">
+                    {coverUrl(b.cover_key)
+                      ? <img src={coverUrl(b.cover_key)!} alt="" loading="lazy" decoding="async" width="52" height="78" />
+                      : <strong>{markOf(b.title)}</strong>}
+                  </span>
+                  <span class="t"><b>{b.title}</b><small>{[b.author, b.category?.name].filter(Boolean).join(' · ')}</small></span>
+                  <span class="go" aria-hidden="true">→</span>
+                </a>
+              </li>
+            ))}
+          </ol>
+        )}
+      </div>
+    </section>
+  )}
+
+  {articles.length > 0 && (
+    <section class={`articles${articles.length < 2 ? ' static' : ''}`} id="articulos" data-articles data-interval="8000" role="region" aria-roledescription="carrusel" aria-label="Artículos">
+      <div class="articles-head" data-reveal>
+        <div><p class="kicker">Lecturas</p><h2>Artículos</h2></div>
+        <div class="articles-ctrl">
+          <p class="art-count" aria-hidden="true"><b data-art-cur>{pad(1)}{articles.length > 1 ? `–${pad(Math.min(2, articles.length))}` : ''}</b> / {pad(articles.length)}</p>
+          <button type="button" class="art-btn" data-art-prev aria-label="Artículos anteriores"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg></button>
+          <button type="button" class="art-btn" data-art-next aria-label="Artículos siguientes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" /></svg></button>
+        </div>
+      </div>
+      <div class="art-bar" aria-hidden="true"><i data-art-bar></i></div>
+      <div class="art-track" data-art-track data-reveal>
+        {articles.map((a, i) => (
+          <article class="art-slide" role="group" aria-roledescription="diapositiva" aria-label={`${i + 1} de ${articles.length}`}>
+            <a class="art-card" href={`/articulo/${a.slug}`}>
+              <p class="art-meta"><span>{a.kicker ?? 'Artículo'}</span><span>{formatDate(a.published_at)}</span></p>
+              <h3>{a.title}</h3>
+              {a.subtitle && <p class="art-sub">{a.subtitle}</p>}
+              <p class="art-excerpt">{excerptOf(a, 230)}</p>
+              <p class="art-foot"><span>{a.source ?? a.author ?? ''}</span><span>{readingMinutes(a.body)} min</span></p>
+              <span class="art-go">Leer artículo <i>→</i></span>
+            </a>
+          </article>
+        ))}
+      </div>
+      <a class="art-all" href="/articulos">Todos los artículos <span>→</span></a>
     </section>
   )}
 

@@ -1,6 +1,6 @@
-export const slugify = (s: string) =>
+export const slugify = (s: string, fallback = 'libro') =>
   s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'libro';
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || fallback;
 
 const text = (f: FormData, k: string, max: number) => String(f.get(k) ?? '').trim().slice(0, max);
 
@@ -19,6 +19,26 @@ export function parseBookForm(f: FormData) {
       publisher: text(f, 'publisher', 200) || null,
       language: text(f, 'language', 10) || 'es',
       category_id: text(f, 'category_id', 40) || null,
+    },
+  };
+}
+
+export function parseArticleForm(f: FormData) {
+  const title = text(f, 'title', 300);
+  if (!title) return { error: 'El título es obligatorio.' as const };
+  const body = String(f.get('body') ?? '').replace(/\r\n?/g, '\n').trim().slice(0, 120000);
+  if (!body) return { error: 'El cuerpo del artículo no puede estar vacío.' as const };
+  const d = text(f, 'published_at', 10);
+  if (d && (!/^\d{4}-\d{2}-\d{2}$/.test(d) || Number.isNaN(Date.parse(d)))) return { error: 'Fecha no válida.' as const };
+  return {
+    row: {
+      title, body,
+      subtitle: text(f, 'subtitle', 300) || null,
+      kicker: text(f, 'kicker', 60) || null,
+      author: text(f, 'author', 200) || null,
+      source: text(f, 'source', 200) || null,
+      excerpt: text(f, 'excerpt', 500) || null,
+      ...(d ? { published_at: d } : {}),
     },
   };
 }

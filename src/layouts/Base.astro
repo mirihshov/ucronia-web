@@ -16,7 +16,7 @@ const fullTitle = title ? `${title} · ${site.name}` : `${site.name} — Bibliot
 const img = new URL(image ?? '/og-default.png', Astro.url.origin).href;
 const footer = await getFooter();
 const year = String(new Date().getFullYear());
-const nav = [['Inicio', '/', 'inicio'], ['Biblioteca', '/catalogo', 'biblioteca'], ['Manifiesto', '/#manifiesto', 'manifiesto'], ['Acerca', '/acerca', 'acerca']];
+const nav = [['Inicio', '/', 'inicio'], ['Biblioteca', '/catalogo', 'biblioteca'], ['Artículos', '/articulos', 'articulos'], ['Manifiesto', '/#manifiesto', 'manifiesto'], ['Acerca', '/acerca', 'acerca']];
 ---
 <!doctype html>
 <html lang="es">

@@ -9,8 +9,9 @@ export const GET: APIRoute = async ({ url }) => {
     rows.push(...(data ?? []));
     if ((data?.length ?? 0) < 1000) break;
   }
+  const { data: arts } = await supabase.from('articles').select('slug,updated_at').order('published_at');
   const u = (loc: string, last?: string) => `<url><loc>${esc(url.origin + loc)}</loc>${last ? `<lastmod>${last.slice(0, 10)}</lastmod>` : ''}</url>`;
-  const body = [u('/'), u('/catalogo'), u('/acerca'), ...rows.map((r) => u(`/libro/${r.slug}`, r.updated_at))].join('');
+  const body = [u('/'), u('/catalogo'), u('/acerca'), u('/articulos'), ...rows.map((r) => u(`/libro/${r.slug}`, r.updated_at)), ...(arts ?? []).map((r) => u(`/articulo/${r.slug}`, r.updated_at))].join('');
   return new Response(`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${body}</urlset>`,
     { headers: { 'Content-Type': 'application/xml; charset=utf-8', 'Cache-Control': 'public, max-age=3600' } });
 };

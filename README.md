@@ -26,6 +26,12 @@ Astro (SSR) + Cloudflare Pages (solo la web) + Supabase (base de datos, autentic
   - Permisos (RLS en `storage.objects`): escribir, reemplazar y borrar solo si `is_admin()`; leer, `anon` solo `covers/`, `hero/` y los EPUB cuyo libro está publicado. Si despublicas un libro, su EPUB deja de ser legible.
   - Si ya tenías archivos en R2: `npm run migrar:r2` (opcional, ver DEPLOY.md). Las claves no cambian, así que la base de datos tampoco.
   - Límite configurable: `MAX_EPUB_MB` en `wrangler.toml`. Pruebas: `npm run test:epub`.
+- [x] Fase 8: artículos y portada editorial
+  - Ejecuta `supabase/migrations/0008_articulos.sql` (tabla `articles` con RLS: público solo ve los publicados).
+  - Admin → **Artículos**: título, subtítulo, sección, autoría, fuente/edición, fecha, resumen y cuerpo con formato sencillo (`##` títulos, `>` citas, `- ` listas, `**negrita**`, `*cursiva*`, `[texto](url)`). Todo el HTML se escapa.
+  - Portada: «Selección destacada» pasa a composición editorial (título principal + lista numerada) y, entre ella y «Últimas incorporaciones», aparece una sección negra con la vista previa de los artículos de dos en dos (uno en móvil) que rota sola, se detiene al pasar el ratón o enfocar, y se maneja con flechas, teclado o el dedo.
+  - Páginas: `/articulos` (listado) y `/articulo/[slug]` (interior oscuro con cabecera centrada, entradilla, citas y pestaña «Artículos relacionados»). Entran en el sitemap.
+  - Pruebas: `npm run test:articles`.
 - [x] Fase 7: PDF opcional por libro y búsqueda reparada
   - Ejecuta `supabase/migrations/0007_pdf_y_busqueda.sql` (columnas `pdf_key`/`pdf_size`, el bucket acepta PDF y la política de lectura pública incluye los PDF de libros publicados).
   - En el panel, cada libro puede llevar un PDF opcional (máx. 20 MB, `MAX_PDF_MB`); solo los libros con PDF muestran «Descargar PDF» (`/descargar-pdf/[slug]`) y el enlace PDF en OPDS.
