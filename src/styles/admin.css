@@ -159,3 +159,11 @@
 @media (max-width:640px){.adm .link-row{grid-template-columns:1fr}}
 .adm .soc-row{grid-template-columns:minmax(120px,.7fr) 1.7fr}
 .adm .slide-card .link-rows{display:grid;gap:10px;margin-top:6px}
+
+/* Borradores automáticos y archivos grandes */
+.draft-banner{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin:0 0 6px;padding:12px 14px;border:1px solid var(--rule);border-left:4px solid var(--ink);background:#f4f2ec;font-family:Georgia,serif;font-size:14px;line-height:1.45}
+.draft-banner button{padding:7px 12px;border:1px solid var(--ink);background:none;color:var(--ink);font-size:11px;letter-spacing:.04em;text-transform:uppercase;cursor:pointer}
+@media (hover:hover){.draft-banner button:hover{background:var(--ink);color:#fff}}
+.draft-status{margin:0;color:#68655f;font-size:12px;line-height:1.4}
+.draft-status.warn,.file-note.warn{color:#a3271f}
+.file-note{display:block;margin-top:6px;color:#68655f;font-size:12px;line-height:1.4;letter-spacing:0;text-transform:none}

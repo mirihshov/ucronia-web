@@ -1,8 +1,8 @@
 import type { APIRoute } from 'astro';
 import { parseFooterForm } from '../../../lib/footer-form';
 
-const go = (msg: string) =>
-  new Response(null, { status: 303, headers: { Location: `/admin/pie?msg=${encodeURIComponent(msg)}` } });
+const go = (msg: string, ok = false) =>
+  new Response(null, { status: 303, headers: { Location: `/admin/pie?msg=${encodeURIComponent(msg)}${ok ? '&ok=1' : ''}` } });
 
 export const POST: APIRoute = async ({ request, locals }) => {
   const db = locals.admin!.client; // sesión admin; RLS lo comprueba otra vez en la base
@@ -23,5 +23,5 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return go(error.code === '42501' ? 'Sin permiso.' : `Error: ${error.message}`);
   }
   try { await (globalThis as any).caches?.default?.delete(new URL('/', request.url).href); } catch { /* caché de borde: opcional */ }
-  return go(intent === 'save' ? 'Pie de página guardado. Ya está en la web.' : 'Pie de página original restablecido.');
+  return go(intent === 'save' ? 'Pie de página guardado. Ya está en la web.' : 'Pie de página original restablecido.', true); // ok=1: el navegador borra el borrador automático
 };

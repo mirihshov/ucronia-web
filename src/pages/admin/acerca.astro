@@ -6,7 +6,7 @@ const about = await getAbout(Astro.locals.admin!.client);
 ---
 <Admin title="Acerca de">
   <div class="adm-title"><div><p class="kicker">Sitio</p><h1>Acerca del proyecto</h1><p class="adm-lead">Título y secciones de la página <a href="/acerca" target="_blank" rel="noopener">/acerca</a>. Puedes añadir, ordenar y quitar secciones (hasta {MAX_SECTIONS}). Los cambios se ven en la web en menos de un minuto.</p></div></div>
-  <form method="post" action="/api/admin/about" class="stack wide" id="about-form">
+  <form method="post" action="/api/admin/about" class="stack wide" id="about-form" data-draft="about" data-draft-cards="[data-about-card]" data-draft-add="[data-add]">
     <input type="hidden" name="intent" value="save" />
     <label>Título de la página<input name="page_title" maxlength={MAX_PAGE_TITLE} value={about.title} required /></label>
 

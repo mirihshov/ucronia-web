@@ -6,7 +6,7 @@ const slides = await getSlides(Astro.locals.admin!.client);
 ---
 <Admin title="Portada">
   <div class="adm-title"><div><p class="kicker">Sitio</p><h1>Portada</h1><p class="adm-lead">Titulares de la página de inicio. Con dos o más, rotan solos junto a su foto cada pocos segundos. Los cambios se ven en la web en menos de un minuto.</p></div></div>
-  <form method="post" action="/api/admin/settings" enctype="multipart/form-data" class="stack wide" id="slides-form">
+  <form method="post" action="/api/admin/settings" enctype="multipart/form-data" class="stack wide" id="slides-form" data-draft="slides" data-draft-cards="[data-slide-card]" data-draft-add="[data-add]" data-draft-hidden="image_key">
     <input type="hidden" name="intent" value="save" />
     <div class="slides" data-slides data-max={MAX_SLIDES}>
       {slides.map((s, i) => <SlideFields slide={s} n={i + 1} />)}

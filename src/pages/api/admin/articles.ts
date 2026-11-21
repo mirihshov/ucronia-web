@@ -70,7 +70,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
     // Solo tras guardar con éxito se borra la portada reemplazada o quitada.
     if (hasCover || dropCover) await removeFiles(db, [oldCover]);
-    return go(`/admin/articulos/${savedId}`, id ? 'Cambios guardados.' : 'Artículo creado como borrador. Ya puedes publicarlo.');
+    return go(`/admin/articulos/${savedId}?ok=1`, id ? 'Cambios guardados.' : 'Artículo creado como borrador. Ya puedes publicarlo.');
   }
 
   if (!id) return go('/admin/articulos', 'Falta el artículo.');

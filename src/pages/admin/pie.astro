@@ -7,7 +7,7 @@ const social = Array.from({ length: MAX_SOCIAL }, (_, i) => f.social[i] ?? { net
 ---
 <Admin title="Pie de página">
   <div class="adm-title"><div><p class="kicker">Sitio</p><h1>Pie de página</h1><p class="adm-lead">Fondo negro con el logo, hasta {MAX_COLS} columnas de información (texto y enlaces) y redes sociales. Lo que dejes en blanco no se muestra. Los cambios se ven en la web en menos de un minuto.</p></div></div>
-  <form method="post" action="/api/admin/footer" class="stack wide">
+  <form method="post" action="/api/admin/footer" class="stack wide" data-draft="footer">
     <input type="hidden" name="intent" value="save" />
 
     <label>Frase junto al logo (vacío = ninguna)<input name="tagline" maxlength="140" value={f.tagline} /></label>

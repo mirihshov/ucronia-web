@@ -3,8 +3,8 @@ import { putObject, removeObjects, sniffImage } from '../../../lib/storage';
 import { MAX_SLIDES, slideKeys } from '../../../lib/settings';
 
 const MAX_IMAGE = 3 * 1024 * 1024;
-const go = (msg: string) =>
-  new Response(null, { status: 303, headers: { Location: `/admin/portada?msg=${encodeURIComponent(msg)}` } });
+const go = (msg: string, ok = false) =>
+  new Response(null, { status: 303, headers: { Location: `/admin/portada?msg=${encodeURIComponent(msg)}${ok ? '&ok=1' : ''}` } });
 
 export const POST: APIRoute = async ({ request, locals }) => {
   const db = locals.admin!.client; // sesión admin; RLS lo comprueba otra vez en la base
@@ -67,5 +67,5 @@ export const POST: APIRoute = async ({ request, locals }) => {
   } else return go('Acción no válida.');
 
   try { await (globalThis as any).caches?.default?.delete(new URL('/', request.url).href); } catch { /* caché de borde: opcional */ }
-  return go(intent === 'save' ? 'Portada guardada. Ya está en la web.' : 'Titulares y fotos originales restablecidos.');
+  return go(intent === 'save' ? 'Portada guardada. Ya está en la web.' : 'Titulares y fotos originales restablecidos.', true); // ok=1: el navegador borra el borrador automático
 };

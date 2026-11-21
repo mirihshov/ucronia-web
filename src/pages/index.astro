@@ -81,13 +81,6 @@ const INTERVAL = 7000; // ms que dura cada titular
               </div>
             </article>
           ))}
-          {featured.length > 1 && (
-            <div class="feat-ctrl">
-              <p class="feat-count" aria-hidden="true"><b data-feat-cur>01</b> / {pad(featured.length)}</p>
-              <button type="button" class="feat-btn" data-feat-prev aria-label="Destacado anterior"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg></button>
-              <button type="button" class="feat-btn" data-feat-next aria-label="Destacado siguiente"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" /></svg></button>
-            </div>
-          )}
         </div>
         {featured.length > 1 && (
           <ol class="feat-list" data-feat-list aria-label="Títulos destacados">

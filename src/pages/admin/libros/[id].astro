@@ -14,7 +14,7 @@ const { data: cats } = await db.from('categories').select('id,name').order('posi
 ---
 <Admin title={isNew ? 'Nuevo libro' : 'Editar libro'}>
   <div class="adm-title"><div><p class="kicker"><a href="/admin">← Libros</a></p><h1>{isNew ? 'Nuevo libro' : 'Editar ficha'}</h1></div></div>
-  <form method="post" action="/api/admin/books" class="stack" enctype="multipart/form-data">
+  <form method="post" action="/api/admin/books" class="stack" enctype="multipart/form-data" data-draft={`book:${id}`} data-draft-new={isNew ? '' : undefined}>
     <input type="hidden" name="intent" value="save" />
     {!isNew && <input type="hidden" name="id" value={book.id} />}
     <fieldset>
@@ -40,18 +40,18 @@ const { data: cats } = await db.from('categories').select('id,name').order('posi
     <fieldset>
       <legend>Archivos</legend>
       <label>Archivo EPUB {isNew ? '(obligatorio)' : '(opcional: reemplaza el actual)'}
-        <input type="file" name="epub" accept=".epub,application/epub+zip" required={isNew} />
+        <input type="file" name="epub" accept=".epub,application/epub+zip" required={isNew} data-max-mb="15" />
         <input type="hidden" name="epub_sha256" value="" />
       </label>
       {!isNew && <p class="note" style="margin:0">{book.epub_key ? `EPUB actual: ${formatSize(book.epub_size)}` : 'Sin EPUB: no se puede publicar.'}</p>}
       <label>Archivo PDF (opcional, máx. 20 MB) {!isNew && book.pdf_key ? '— reemplaza el actual' : ''}
-        <input type="file" name="pdf" accept=".pdf,application/pdf" />
+        <input type="file" name="pdf" accept=".pdf,application/pdf" data-max-mb="20" />
       </label>
       {!isNew && (book.pdf_key
         ? <label class="check"><input type="checkbox" name="remove_pdf" value="1" /> Quitar el PDF actual ({formatSize(book.pdf_size)}); el libro seguirá disponible en EPUB</label>
         : <p class="note" style="margin:0">Sin PDF: en la ficha pública solo aparecerá la descarga en EPUB.</p>)}
       <label>Portada (JPG, PNG o WebP, máx. 2 MB)
-        <input type="file" name="cover" accept="image/jpeg,image/png,image/webp" />
+        <input type="file" name="cover" accept="image/jpeg,image/png,image/webp" data-max-mb="2" data-image />
       </label>
       {book.cover_key && <img class="thumb" src={coverUrl(book.cover_key)!} alt="Portada actual" width="140" />}
     </fieldset>

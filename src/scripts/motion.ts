@@ -101,7 +101,7 @@ function setupHero() {
 
 /* ── Destacados interactivos: la lista elige el título que se muestra en grande ──
    Pasar el ratón (o tocar) selecciona; un segundo clic abre la ficha. Rota sola, se inclina con el ratón, se desliza con el dedo
-   y funciona con teclado (flechas, Inicio, Fin). Sin JavaScript se ve el primero y todos los enlaces siguen funcionando. */
+   y funciona con teclado (flechas, Inicio, Fin), sin botones ni contador. Sin JavaScript se ve el primero y todos los enlaces siguen funcionando. */
 function setupFeatured() {
   const root = document.querySelector<HTMLElement>('[data-feat]');
   if (!root || root.dataset.ready) return;
@@ -113,7 +113,6 @@ function setupFeatured() {
   const every = Number(root.dataset.interval) || 6500;
   const stage = root.querySelector<HTMLElement>('[data-feat-stage]');
   const list = root.querySelector<HTMLElement>('[data-feat-list]');
-  const cur = root.querySelector<HTMLElement>('[data-feat-cur]');
   let i = 0, elapsed = 0, hover = false, focus = false, away = false, hoverTimer = 0;
 
   list?.setAttribute('role', 'tablist');
@@ -144,7 +143,6 @@ function setupFeatured() {
       t.setAttribute('aria-selected', String(on)); t.tabIndex = on ? 0 : -1;
     });
     resetTilt(prev);
-    if (cur) cur.textContent = String(i + 1).padStart(2, '0');
     if (moveFocus) tabs[i].focus();
     // En móvil la lista es una tira horizontal: se centra el seleccionado (sin mover la página).
     if (list && list.scrollWidth > list.clientWidth + 2) {
@@ -167,8 +165,6 @@ function setupFeatured() {
       e.preventDefault(); show(to, true);
     });
   });
-  root.querySelector('[data-feat-prev]')?.addEventListener('click', () => show(i - 1));
-  root.querySelector('[data-feat-next]')?.addEventListener('click', () => show(i + 1));
 
   // Deslizar con el dedo sobre el título principal.
   let x0 = 0, y0 = 0;

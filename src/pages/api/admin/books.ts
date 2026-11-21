@@ -109,7 +109,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // Solo tras guardar con éxito se borran los archivos reemplazados.
     if (old) await removeFiles(db, [hasEpub ? old.epub_key : null, hasCover ? old.cover_key : null, hasPdf || dropPdf ? old.pdf_key : null]);
     notifyBackup(locals);
-    return go(`/admin/libros/${savedId}`, id ? 'Cambios guardados.' : 'Libro creado como borrador. Ya puedes publicarlo.');
+    return go(`/admin/libros/${savedId}?ok=1`, id ? 'Cambios guardados.' : 'Libro creado como borrador. Ya puedes publicarlo.');
   }
 
   if (!id) return go('/admin', 'Falta el libro.');

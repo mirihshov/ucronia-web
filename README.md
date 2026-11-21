@@ -26,6 +26,10 @@ Astro (SSR) + Cloudflare Pages (solo la web) + Supabase (base de datos, autentic
   - Permisos (RLS en `storage.objects`): escribir, reemplazar y borrar solo si `is_admin()`; leer, `anon` solo `covers/`, `hero/` y los EPUB cuyo libro está publicado. Si despublicas un libro, su EPUB deja de ser legible.
   - Si ya tenías archivos en R2: `npm run migrar:r2` (opcional, ver DEPLOY.md). Las claves no cambian, así que la base de datos tampoco.
   - Límite configurable: `MAX_EPUB_MB` en `wrangler.toml`. Pruebas: `npm run test:epub`.
+- [x] Fase 10: copia de seguridad de lo que se escribe en el panel y archivos grandes
+  - **Borradores automáticos** (Libros, Artículos, Portada, Acerca de, Pie de página): lo escrito se guarda en el navegador mientras se edita. Si se cierra la pestaña, caduca la sesión o el servidor rechaza el guardado (p. ej. imagen demasiado grande), al volver se recupera todo con un aviso (con «Descartar»). El borrador solo se borra cuando el servidor confirma el guardado (redirección con `ok=1`). Los archivos elegidos no se pueden guardar: hay que volver a elegirlos. Los avisos al cerrar con cambios sin guardar también están activos.
+  - **Archivos grandes:** los campos de archivo avisan antes de enviar si pasan el límite (EPUB 15 MB, PDF 20 MB). Las imágenes (portadas, fotos de titulares) se reducen solas en el navegador (JPG, máx. 2400 px) hasta que caben en el límite.
+  - Código: `src/scripts/admin-draft.ts`; los formularios se marcan con `data-draft`. Pruebas: `npm run test:draft`.
 - [x] Fase 9: destacados interactivos y portada en los artículos
   - Ejecuta `supabase/migrations/0009_articulos_portada.sql` (después de la 0008).
   - «Selección destacada»: hasta 6 títulos; la lista elige cuál se muestra en grande (ratón: pasar por encima; táctil: tocar; segundo clic abre la ficha). Rota sola con barra de avance, portada con inclinación 3D, flechas, deslizar con el dedo y teclado (flechas, Inicio, Fin). En móvil la lista es una tira de portadas.

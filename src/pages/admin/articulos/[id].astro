@@ -15,7 +15,7 @@ if (!isNew) {
   <div class="adm-title"><div><p class="kicker"><a href="/admin/articulos">← Artículos</a></p><h1>{isNew ? 'Nuevo artículo' : 'Editar artículo'}</h1></div>
     {!isNew && a.published && <a class="btn-s" href={`/articulo/${a.slug}`} target="_blank" rel="noopener">Ver en el sitio ↗</a>}
   </div>
-  <form method="post" action="/api/admin/articles" class="stack" enctype="multipart/form-data">
+  <form method="post" action="/api/admin/articles" class="stack" enctype="multipart/form-data" data-draft={`article:${id}`} data-draft-new={isNew ? '' : undefined}>
     <input type="hidden" name="intent" value="save" />
     {!isNew && <input type="hidden" name="id" value={a.id} />}
     <fieldset>
@@ -41,7 +41,7 @@ if (!isNew) {
     <fieldset>
       <legend>Portada</legend>
       <label>Imagen de portada (JPG, PNG o WebP, máx. 3 MB) {!isNew && a.cover_key ? '— reemplaza la actual' : '(opcional)'}
-        <input type="file" name="cover" accept="image/jpeg,image/png,image/webp" />
+        <input type="file" name="cover" accept="image/jpeg,image/png,image/webp" data-max-mb="3" data-image />
       </label>
       {a.cover_key && <img class="thumb photo" src={coverUrl(a.cover_key)!} alt="Portada actual" />}
       {a.cover_key && <label class="check"><input type="checkbox" name="remove_cover" value="1" /> Quitar la portada actual</label>}

@@ -594,7 +594,7 @@ dialog.reader.closing .reader-bar,dialog.reader.closing .reader-foot{animation:r
 .feat-stage{position:relative;display:grid;align-content:center;border-right:1px solid #cbc8c0}
 .feat.solo .feat-stage{border-right:0}
 /* todos los títulos ocupan la misma celda: el escenario mide lo que el más alto y no «salta» al cambiar */
-.feat-panel{grid-area:1/1;position:relative;display:grid;grid-template-columns:minmax(150px,250px) minmax(0,1fr);gap:40px;align-items:start;padding:44px 44px 70px 0;
+.feat-panel{grid-area:1/1;position:relative;display:grid;grid-template-columns:minmax(150px,250px) minmax(0,1fr);gap:40px;align-items:start;padding:44px 44px 44px 0;
   opacity:0;visibility:hidden;pointer-events:none;transform:translateX(calc(var(--dir,1)*26px));
   transition:opacity .5s var(--ease),transform .7s var(--ease),visibility 0s .5s}
 .feat-panel.out{transform:translateX(calc(var(--dir,1)*-26px))}
@@ -619,14 +619,6 @@ dialog.reader.closing .reader-bar,dialog.reader.closing .reader-foot{animation:r
 .feat-panel.on .feat-copy>*{animation:featIn .8s var(--ease) both;animation-delay:calc(var(--k,0)*70ms + 140ms)}
 @keyframes featCover{from{opacity:0;translate:0 18px;scale:.95}}
 @keyframes featIn{from{opacity:0;transform:translateY(16px)}}
-/* contador y flechas */
-.feat-ctrl{position:absolute;right:44px;bottom:16px;z-index:2;display:flex;align-items:center;gap:8px}
-.feat-count{margin-right:8px;color:#77736d;font-size:11px;letter-spacing:.14em;font-variant-numeric:tabular-nums}
-.feat-count b{color:#161616;font-weight:500}
-.feat-btn{display:grid;place-items:center;width:38px;height:38px;padding:0;border:1px solid #aaa69d;background:none;color:#161616;transition:background .25s,color .25s,border-color .25s}
-.feat-btn svg{width:16px;fill:none;stroke:currentColor;stroke-width:1.4}
-@media (hover:hover){.feat-btn:hover{background:#161616;border-color:#161616;color:#fff}}
-.feat-btn:focus-visible{outline:2px solid #161616;outline-offset:2px}
 /* lista: cada fila elige el título del escenario; la activa muestra una barra con el avance de la rotación */
 .feat-list{position:relative;margin:0;padding:0 0 0 40px;list-style:none}
 .feat-list li{position:relative;border-bottom:1px solid #cbc8c0}
@@ -649,26 +641,33 @@ dialog.reader.closing .reader-bar,dialog.reader.closing .reader-foot{animation:r
 .feat-list li.is-active .book-cover{box-shadow:5px 6px 0 #c9c4b8}
 .fbar{display:none;position:absolute;left:0;right:0;bottom:-1px;height:2px;background:#161616;transform:scaleX(var(--fp,0));transform-origin:left}
 .feat-list li.is-active .fbar{display:block}
-@media(max-width:900px){.feat-panel{grid-template-columns:minmax(120px,190px) minmax(0,1fr);gap:28px;padding-right:28px}.feat-ctrl{right:28px}.feat-list{padding-left:26px}}
-@media(max-width:760px){
+/* Tableta y móvil (≤ 900 px): una sola columna; el título elegido arriba y la lista pasa a ser una tira de portadas que se desliza */
+@media(max-width:900px){
   .feat{grid-template-columns:1fr}
-  .feat-stage{border-right:0;border-bottom:1px solid #cbc8c0}
-  .feat-panel{grid-template-columns:112px minmax(0,1fr);gap:18px;padding:24px 0 64px}
-  .feat-cover .book-cover{box-shadow:5px 6px 0 #d5d1c8}.feat-cover .book-cover strong{font-size:36px}
-  .feat-copy h3{margin:12px 0 6px;font-size:28px}.feat-author{font-size:15px}
-  .feat-desc{-webkit-line-clamp:3;margin-top:12px;font-size:14px}.feat-copy .book-tags{margin-top:12px}.feat-more{margin-top:16px;font-size:11px}
-  .feat-ctrl{right:0;bottom:14px}
-  /* la lista pasa a ser una tira de portadas que se desliza; el título sigue disponible para lectores de pantalla */
-  .feat-list{display:flex;gap:10px;overflow-x:auto;padding:16px 0;scrollbar-width:none;scroll-snap-type:x proximity}
+  .feat-stage{border-right:0;border-bottom:1px solid #cbc8c0;overflow-x:clip;touch-action:pan-y}
+  .feat-panel{grid-template-columns:minmax(130px,190px) minmax(0,1fr);gap:28px;padding:28px 0}
+  .feat-list{display:flex;gap:12px;overflow-x:auto;padding:16px 0;scrollbar-width:none;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
   .feat-list::-webkit-scrollbar{display:none}
   .feat-list li,.feat-list li:last-child{flex:0 0 auto;border:0;scroll-snap-align:center}
   .feat-list a,.feat-list li.is-active a{display:block;padding:8px 6px 12px}
+  .feat-list li:not(.is-active) a{opacity:.7}
   .feat-list .n,.feat-list .go{display:none}
-  .feat-list .t{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-  .feat-list .book-cover{width:58px;height:87px}
+  .feat-list .t{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap} /* el título sigue disponible para lectores de pantalla */
+  .feat-list .book-cover{width:66px;height:99px}
   .feat-list li.is-active .book-cover{transform:translateY(-4px)}
   .fbar{left:6px;right:6px;bottom:4px}
+}
+@media(max-width:760px){
+  .feat-panel{grid-template-columns:112px minmax(0,1fr);gap:18px;padding:24px 0}
+  .feat-cover .book-cover{box-shadow:5px 6px 0 #d5d1c8}.feat-cover .book-cover strong{font-size:36px}
+  .feat-copy h3{margin:12px 0 6px;font-size:28px}.feat-author{font-size:15px}
+  .feat-desc{-webkit-line-clamp:3;margin-top:12px;font-size:14px}.feat-copy .book-tags{margin-top:12px}.feat-more{margin-top:16px;font-size:11px}
+  .feat-list .book-cover{width:58px;height:87px}
   .text-link{display:none}
+}
+@media(max-width:380px){
+  .feat-panel{grid-template-columns:92px minmax(0,1fr);gap:14px}
+  .feat-copy h3{font-size:25px}.feat-desc{font-size:13.5px}
 }
 @media (prefers-reduced-motion:reduce){
   .feat-panel,.feat-panel.on,.feat-cover,.feat-list a,.feat-list .go{transition:none}

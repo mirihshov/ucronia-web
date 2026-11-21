@@ -20,7 +20,7 @@ const s = slide ?? { kicker: '', title: '', deck: '', image: '', imageAlt: '', c
     <div class="slide-photo-f">
       <input type="hidden" name="image_key" value={s.key ?? ''} />
       <label>Foto (JPG, PNG o WebP, máx. 3 MB; mejor 1200 px de ancho o más)
-        <input type="file" name="image" accept="image/jpeg,image/png,image/webp" data-file />
+        <input type="file" name="image" accept="image/jpeg,image/png,image/webp" data-file data-max-mb="3" data-image />
       </label>
       {s.customImage
         ? <label>Foto actual<select name="image_mode"><option value="keep">Mantener esta foto</option><option value="remove">Volver a la foto original</option></select></label>
