@@ -589,7 +589,7 @@ dialog.reader.closing .reader-bar,dialog.reader.closing .reader-foot{animation:r
 .text-link span{display:inline-block;transition:transform .3s var(--ease)}
 @media (hover:hover){.text-link:hover span{transform:translateX(4px)}}
 .book-tags{position:relative;z-index:1} /* por encima del enlace que cubre toda la tarjeta */
-.feat{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);margin-top:35px;border-top:1px solid #161616;border-bottom:1px solid #161616}
+.feat{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);margin-top:35px}
 .feat.solo{grid-template-columns:1fr}
 .feat-stage{position:relative;display:grid;align-content:center;border-right:1px solid #cbc8c0}
 .feat.solo .feat-stage{border-right:0}
@@ -646,7 +646,7 @@ dialog.reader.closing .reader-bar,dialog.reader.closing .reader-foot{animation:r
 .feat-list li.is-active a{padding-left:12px}
 .feat-list li.is-active .n{color:#161616}
 .feat-list li.is-active .go{opacity:1;transform:none}
-.feat-list li.is-active .book-cover{box-shadow:5px 6px 0 #161616}
+.feat-list li.is-active .book-cover{box-shadow:5px 6px 0 #c9c4b8}
 .fbar{display:none;position:absolute;left:0;right:0;bottom:-1px;height:2px;background:#161616;transform:scaleX(var(--fp,0));transform-origin:left}
 .feat-list li.is-active .fbar{display:block}
 @media(max-width:900px){.feat-panel{grid-template-columns:minmax(120px,190px) minmax(0,1fr);gap:28px;padding-right:28px}.feat-ctrl{right:28px}.feat-list{padding-left:26px}}
